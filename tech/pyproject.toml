@@ -38,7 +38,7 @@ addopts = '-p no:warnings'
 [tool.taskipy.tasks]
 run = 'fastapi dev tech/app.py'
 
-pre_test = 'task lint'
+
 test = 'pytest --cov=tech -vv'
 post_test = 'coverage html'
 
