@@ -15,7 +15,12 @@ def session():
 
 
 def test_create_user(session):
-    user = User(username='kauan', email='kauan@fiap.com', password='senhas')
+    user = User(
+        username='kauan',
+        email='kauan@fiap.com',
+        password='senhas',
+        cpf='42190223489',
+    )
     session.add(user)
     session.commit()
 
