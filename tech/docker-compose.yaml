@@ -1,0 +1,25 @@
+services:
+  tech_database:
+    image: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: app_user
+      POSTGRES_DB: app_db
+      POSTGRES_PASSWORD: app_password
+    ports:
+      - "5432:5432"
+
+  tech_app:
+    image: tech_challenge_01_kauan
+    entrypoint: ./entrypoint.sh
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - tech_database
+    environment:
+      DATABASE_URL: postgresql+psycopg://app_user:app_password@tech_database:5432/app_db
+
+volumes:
+  pgdata:

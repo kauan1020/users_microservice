@@ -74,5 +74,6 @@ class OrderPublic(BaseModel):
     class Config:
         orm_mode = True
 
+
 class OrderList(BaseModel):
     orders: list[OrderPublic]

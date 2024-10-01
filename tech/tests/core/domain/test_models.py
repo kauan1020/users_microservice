@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
-from tech.models import User, table_registry
+from tech.core.domain.models import User, table_registry
 
 
 @pytest.fixture
@@ -14,7 +14,7 @@ def session():
     table_registry.metadata.drop_all(engine)
 
 
-def test_create_user(session):
+def test_should_create_user(session):
     user = User(
         username='kauan',
         email='kauan@fiap.com',
