@@ -1,8 +1,10 @@
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from tech.core.domain.settings import Settings
+from tech.adapters.driven.infra.settings import Settings
 
+load_dotenv()
 engine = create_engine(Settings().DATABASE_URL)
 
 

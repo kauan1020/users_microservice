@@ -39,7 +39,7 @@ pythonpath = "."
 addopts = '-p no:warnings'
 
 [tool.taskipy.tasks]
-run = 'fastapi dev tech/core/app/app.py'
+run = 'fastapi dev tech/adapters/driver/http/app.py'
 
 
 test = 'pytest --cov=tech -vv'

@@ -1,69 +1,51 @@
-from sqlalchemy import Enum, func
-import enum
+
 from datetime import datetime
-
-from sqlalchemy import func
-from sqlalchemy.orm import Mapped, mapped_column, registry
-
-table_registry = registry()
+from enum import Enum
+from typing import List, Optional
+from tech.core.domain.value_objects import CPF
 
 
-@table_registry.mapped_as_dataclass
+class OrderStatus(str, Enum):
+    RECEIVED = 'RECEIVED'
+    PREPARING = 'PREPARING'
+    READY = 'READY'
+    FINISHED = 'FINISHED'
+
+
 class User:
-    __tablename__ = 'users'
+    def __init__(self, username: str, password: str, cpf: CPF, email: str, id: Optional[int] = None):
+        self.id = id
+        self.username = username
+        self.password = password
+        self.cpf = cpf
+        self.email = email
+        self.created_at = datetime.now()
+        self.updated_at = datetime.now()
 
-    id: Mapped[int] = mapped_column(init=False, primary_key=True)
-    username: Mapped[str] = mapped_column(unique=True)
-    password: Mapped[str]
-    cpf: Mapped[str] = mapped_column(unique=True)
-    email: Mapped[str] = mapped_column(unique=True)
-    created_at: Mapped[datetime] = mapped_column(
-        init=False, server_default=func.now()
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        init=False, server_default=func.now(), onupdate=func.now()
-    )
+    def update_password(self, new_password: str):
+        self.password = new_password
+        self.updated_at = datetime.now()
+
+    def update_email(self, new_email: str):
+        self.email = new_email
+        self.updated_at = datetime.now()
 
 
-@table_registry.mapped_as_dataclass
 class Products:
-    __tablename__ = 'products'
-
-    id: Mapped[int] = mapped_column(init=False, primary_key=True)
-    name: Mapped[str] = mapped_column(unique=True)
-    price: Mapped[float]
-    category: Mapped[str]
-    created_at: Mapped[datetime] = mapped_column(
-        init=False, server_default=func.now()
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        init=False, server_default=func.now(), onupdate=func.now()
-    )
+    def __init__(self, name: str, price: float, category: str, id: Optional[int] = None):
+        self.id = id
+        self.name = name
+        self.price = price
+        self.category = category
+        self.created_at = datetime.now()
+        self.updated_at = datetime.now()
 
 
-class OrderStatus(enum.Enum):
-    RECEIVED = 'Recebido'
-    PREPARING = 'Em preparação'
-    READY = 'Pronto'
-    FINISHED = 'Finalizado'
-
-
-@table_registry.mapped_as_dataclass
 class Order:
-    __tablename__ = 'orders'
-
-    id: Mapped[int] = mapped_column(init=False, primary_key=True)
-    total_price: Mapped[float] = mapped_column(nullable=False)
-
-    product_ids: Mapped[str] = mapped_column(nullable=False)
-
-    status: Mapped[OrderStatus] = mapped_column(
-        Enum(OrderStatus), default=OrderStatus.RECEIVED, nullable=False
-    )
-
-    created_at: Mapped[datetime] = mapped_column(
-        init=False, server_default=func.now()
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        init=False, server_default=func.now(), onupdate=func.now()
-    )
+    def __init__(self, total_price: float, product_ids: List[int], status: OrderStatus, id: Optional[int] = None):
+        self.id = id
+        self.total_price = total_price
+        self.product_ids = product_ids
+        self.status = status
+        self.created_at = datetime.now()
+        self.updated_at = datetime.now()

@@ -2,9 +2,7 @@ from http import HTTPStatus
 
 from fastapi import FastAPI
 
-
-from tech.core.app import users_router, products_router
-from tech.core.app import orders_router
+from tech.adapters.driver.http import orders_router, users_router, products_router
 from tech.core.domain.schemas import (
     Message,
 )

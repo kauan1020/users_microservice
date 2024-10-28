@@ -1,6 +1,5 @@
-import pytest
 from http import HTTPStatus
-from tests.core.app.conftest import client, product
+from tests.adapters.driver.http.conftest import client, product
 
 
 class TestOrders(object):
@@ -34,7 +33,7 @@ class TestOrders(object):
         )
 
         assert response.status_code == HTTPStatus.BAD_REQUEST
-        assert response.json() == {'detail': 'Name already exists'}
+        assert response.json() == {'detail': 'Product already exists'}
 
     def test_should_run_read_product_by_category_with_success(
         self, client, product
@@ -85,7 +84,7 @@ class TestOrders(object):
         response = client.delete(f'/products/{product.id}')
 
         assert response.status_code == HTTPStatus.OK
-        assert response.json() == {'message': 'Product deleted successfully'}
+        assert response.json() == {'message': 'Product deleted'}
 
     def test_should_fail_delete_due_invalid_product(self, client):
         response = client.delete('/products/9999')

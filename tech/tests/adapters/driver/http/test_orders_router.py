@@ -1,5 +1,7 @@
 from http import HTTPStatus
-from tests.core.app.conftest import client, product
+
+from tech.core.domain.models import OrderStatus
+from tests.adapters.driver.http.conftest import client, product
 
 
 class TestOrders(object):
@@ -9,7 +11,7 @@ class TestOrders(object):
         assert response.status_code == HTTPStatus.CREATED
         data = response.json()
         assert data['total_price'] == product.price
-        assert data['status'] == 'Recebido'
+        assert data['status'] == OrderStatus.RECEIVED.value
         assert len(data['products']) == 1
         assert data['products'][0]['name'] == product.name
         assert data['products'][0]['price'] == product.price
@@ -20,7 +22,7 @@ class TestOrders(object):
         data = response.json()
         assert len(data['orders']) == 1
         assert data['orders'][0]['total_price'] == order.total_price
-        assert data['orders'][0]['status'] == 'Recebido'
+        assert data['orders'][0]['status'] == OrderStatus.RECEIVED.value
 
     def test_should_fail_due_create_order_with_invalid_product(self, client):
         response = client.post('/orders/', json={'product_ids': [999]})
@@ -42,7 +44,7 @@ class TestOrders(object):
 
         assert order_data['id'] == order.id
         assert order_data['total_price'] == order.total_price
-        assert order_data['status'] == 'Recebido'
+        assert order_data['status'] == OrderStatus.RECEIVED.value
         assert len(order_data['products']) == len(order.product_ids.split(','))
 
         for i, product_id in enumerate(order.product_ids.split(',')):

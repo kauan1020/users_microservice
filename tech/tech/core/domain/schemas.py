@@ -45,10 +45,10 @@ class ProductPublic(BaseModel):
 
 
 class OrderStatusEnum(str, Enum):
-    RECEIVED = 'Recebido'
-    PREPARING = 'Em preparação'
-    READY = 'Pronto'
-    FINISHED = 'Finalizado'
+    RECEIVED = 'RECEIVED'
+    PREPARING = 'PREPARING'
+    READY = 'READY'
+    FINISHED = 'FINISHED'
 
 
 class OrderCreate(BaseModel):
@@ -68,7 +68,7 @@ class ProductDetail(BaseModel):
 class OrderPublic(BaseModel):
     id: int
     total_price: float
-    status: str
+    status: OrderStatusEnum
     products: list[ProductDetail]
 
     class Config:

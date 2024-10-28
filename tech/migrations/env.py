@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 
 from tech.core.domain.models import table_registry
-from tech.core.domain.settings import Settings
+from tech.adapters.driven.infra.settings import Settings
 
 config = context.config
 config.set_main_option('sqlalchemy.url', Settings().DATABASE_URL)
