@@ -73,6 +73,27 @@ def get_user(user_id: int, use_case: UserUseCase = Depends(get_user_use_case)):
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
+@router.get('/cpf/{cpf}', response_model=UserPublic)
+def get_user_by_cpf(cpf: str, use_case: UserUseCase = Depends(get_user_use_case)):
+    """
+    Retrieve a user by their CPF.
+
+    Args:
+        cpf (str): The CPF of the user to retrieve.
+        use_case (UserUseCase): The use case for user-related operations.
+
+    Returns:
+        UserPublic: The user's public data.
+
+    Raises:
+        HTTPException: If the user is not found.
+    """
+    try:
+        user = use_case.get_user_by_cpf(cpf)
+        return user
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
 @router.put('/{user_id}', response_model=UserPublic)
 def update_user(user_id: int, user: UserSchema, use_case: UserUseCase = Depends(get_user_use_case)):
     """Update a user's information.

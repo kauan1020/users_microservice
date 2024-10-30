@@ -58,6 +58,18 @@ class UserRepository(ABC):
         """
         pass
 
+    def get_by_cpf(self, cpf: str) -> Optional[User]:
+        """
+        Fetch a user by their CPF.
+
+        Args:
+            cpf (str): The CPF (Cadastro de Pessoas Físicas, Brazilian tax ID) of the user.
+
+        Returns:
+            Optional[User]: The User object if found, or None if no user with the given CPF exists.
+        """
+        pass
+
     @abstractmethod
     def update(self, user: User) -> User:
         """Updates an existing user's information.

@@ -42,7 +42,7 @@ class SQLAlchemyUserRepository(UserRepository):
             username=db_user.username,
             email=db_user.email,
             password=db_user.password,
-            cpf=db_user.cpf
+            cpf=db_user.cpf  # CPF em texto puro
         )
 
     def add(self, user: User) -> User:
@@ -100,6 +100,19 @@ class SQLAlchemyUserRepository(UserRepository):
                 (SQLAlchemyUser.cpf == cpf)
             )
         )
+        return self._to_domain_user(db_user) if db_user else None
+
+    def get_by_cpf(self, cpf: str) -> Optional[User]:
+        """
+        Fetch a user by their CPF.
+
+        Args:
+            cpf (str): The CPF (Cadastro de Pessoas Físicas, Brazilian tax ID) of the user.
+
+        Returns:
+            Optional[User]: The User object if found, or None if no user with the given CPF exists.
+        """
+        db_user = self.session.scalar(select(SQLAlchemyUser).where(SQLAlchemyUser.cpf == cpf))
         return self._to_domain_user(db_user) if db_user else None
 
     def list_users(self, limit: int, skip: int) -> List[User]:
