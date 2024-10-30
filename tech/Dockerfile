@@ -27,4 +27,4 @@ RUN chmod -R 755 /app
 
 EXPOSE 8000
 
-CMD ["poetry", "run", "uvicorn", "--host", "0.0.0.0", "tech.core.app.app:app"]
+CMD ["poetry", "run", "uvicorn", "--host", "0.0.0.0", "tech.adapters.driver.http.app:app"]

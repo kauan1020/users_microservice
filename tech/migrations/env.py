@@ -5,7 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from tech.core.domain.models import table_registry
+from tech.adapters.driven.infra.repositories.sql_alchemy_models import table_registry
 from tech.adapters.driven.infra.settings import Settings
 
 config = context.config
