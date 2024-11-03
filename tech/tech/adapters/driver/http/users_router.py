@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from tech.adapters.driven.infra.database import get_session
 from tech.core.domain.schemas import UserSchema, UserPublic, Message, UserList
-from tech.core.use_cases.users_use_cases import UserUseCase
+from tech.core.app.use_cases.users_use_cases import UserUseCase
 from tech.adapters.driven.infra.repositories.sql_alchemy_user_repository import SQLAlchemyUserRepository
 
 router = APIRouter()

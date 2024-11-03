@@ -1,10 +1,8 @@
-# tech/adapters/driven/infra/repositories/sql_alchemy_product_repository.py
-
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from typing import List, Optional
 from tech.core.domain.models import Products
-from tech.ports.repositories.product_repository import ProductRepository
+from tech.core.app.repositories.product_repository import ProductRepository
 from tech.adapters.driven.infra.repositories.sql_alchemy_models import SQLAlchemyProduct
 
 class SQLAlchemyProductRepository(ProductRepository):

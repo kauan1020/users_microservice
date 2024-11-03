@@ -1,8 +1,6 @@
 import pytest
 from unittest.mock import Mock
-from http import HTTPStatus
-from tech.core.use_cases.orders_use_cases import CreateOrderUseCase
-from tech.core.domain.models import Order, Products
+from tech.core.app.use_cases.orders_use_cases import CreateOrderUseCase
 from tech.core.domain.enums import OrderStatus
 
 

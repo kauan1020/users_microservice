@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from tech.adapters.driven.infra.database import get_session
 from tech.core.domain.schemas import OrderCreate, OrderList, OrderPublic, Message, OrderStatusEnum
-from tech.core.use_cases.orders_use_cases import OrderUseCase
+from tech.core.app.use_cases.orders_use_cases import OrderUseCase
 from tech.adapters.driven.infra.repositories.sql_alchemy_order_repository import SQLAlchemyOrderRepository
 from tech.adapters.driven.infra.repositories.sql_alchemy_product_repository import SQLAlchemyProductRepository
 

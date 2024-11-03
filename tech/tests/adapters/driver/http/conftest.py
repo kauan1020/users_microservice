@@ -11,9 +11,9 @@ from tech.adapters.driven.infra.repositories.sql_alchemy_product_repository impo
 from tech.adapters.driven.infra.repositories.sql_alchemy_order_repository import SQLAlchemyOrderRepository
 from tech.adapters.driven.infra.repositories.sql_alchemy_models import table_registry
 from tech.core.domain.schemas import UserSchema, ProductSchema, OrderCreate, OrderStatusEnum
-from tech.core.use_cases.users_use_cases import UserUseCase
-from tech.core.use_cases.products_use_cases import ProductUseCase
-from tech.core.use_cases.orders_use_cases import OrderUseCase
+from tech.core.app.use_cases.users_use_cases import UserUseCase
+from tech.core.app.use_cases.products_use_cases import ProductUseCase
+from tech.core.app.use_cases.orders_use_cases import OrderUseCase
 from tech.core.domain.models import Order, Products
 
 @pytest.fixture(scope='session')

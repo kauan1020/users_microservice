@@ -1,7 +1,7 @@
 from typing import List
 from tech.core.domain.models import Products
 from tech.core.domain.schemas import ProductSchema
-from tech.ports.repositories.product_repository import ProductRepository
+from tech.core.app.repositories.product_repository import ProductRepository
 
 class ProductUseCase(object):
     """Use case layer for handling Product-related business logic."""

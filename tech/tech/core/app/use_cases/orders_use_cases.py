@@ -1,7 +1,7 @@
 from tech.core.domain.models import Order, OrderStatus
-from tech.core.domain.schemas import OrderCreate, OrderPublic, OrderStatusEnum
-from tech.ports.repositories.order_repository import OrderRepository
-from tech.ports.repositories.product_repository import ProductRepository
+from tech.core.domain.schemas import OrderCreate, OrderStatusEnum
+from tech.core.app.repositories.order_repository import OrderRepository
+from tech.core.app.repositories.product_repository import ProductRepository
 
 class OrderUseCase(object):
     """Use case layer for handling Order-related business logic."""

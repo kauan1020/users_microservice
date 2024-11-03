@@ -1,7 +1,7 @@
 from tech.core.domain.models import User
 from tech.core.domain.schemas import UserSchema
 from tech.core.domain.security import get_password_hash
-from tech.ports.repositories.user_repository import UserRepository
+from tech.core.app.repositories.user_repository import UserRepository
 
 class UserUseCase:
     """Handles business logic related to user management, acting as an intermediary

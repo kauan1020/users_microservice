@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from tech.adapters.driven.infra.database import get_session
 from tech.core.domain.schemas import ProductSchema, ProductPublic, Message
-from tech.core.use_cases.products_use_cases import ProductUseCase
+from tech.core.app.use_cases.products_use_cases import ProductUseCase
 from tech.adapters.driven.infra.repositories.sql_alchemy_product_repository import SQLAlchemyProductRepository
 
 router = APIRouter()

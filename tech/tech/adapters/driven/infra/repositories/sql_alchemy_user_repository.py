@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from typing import Optional, List
 from tech.core.domain.models import User
-from tech.ports.repositories.user_repository import UserRepository
+from tech.core.app.repositories.user_repository import UserRepository
 from tech.adapters.driven.infra.repositories.sql_alchemy_models import SQLAlchemyUser
 
 class SQLAlchemyUserRepository(UserRepository):
