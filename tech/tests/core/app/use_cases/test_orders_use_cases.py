@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import Mock
-from tech.core.domain.models import Order, Products, OrderStatus
-from tech.core.domain.schemas import OrderCreate, OrderStatusEnum
-from tech.core.app.use_cases.orders_use_cases import OrderUseCase
+from tech.domain import Order, Products, OrderStatus
+from tech.interfaces.schemas import OrderCreate, OrderStatusEnum
+from tech.use_cases.orders_use_cases import OrderUseCase
 
 
 @pytest.fixture

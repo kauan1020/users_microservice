@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from tech.core.domain.schemas import UserPublic
+from tech.interfaces.schemas import UserPublic
 from tests.adapters.driver.http.conftest import client, user
 
 class TestUsers(object):

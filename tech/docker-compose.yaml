@@ -11,8 +11,7 @@ services:
       - "5432:5432"
 
   tech_app:
-    image: tech_challenge_01_kauan
-    entrypoint: ./entrypoint.sh
+    image: kauan/tech:latest
     build: .
     ports:
       - "8000:8000"

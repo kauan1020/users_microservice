@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock
-from tech.core.app.use_cases.orders_use_cases import CreateOrderUseCase
-from tech.core.domain.enums import OrderStatus
+from tech.use_cases.orders_use_cases import CreateOrderUseCase
+from tech.domain import OrderStatus
 
 
 @pytest.fixture

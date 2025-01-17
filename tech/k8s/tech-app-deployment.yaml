@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tech-app
+  namespace: tech-namespace
+  labels:
+    app: tech-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tech-app
+  template:
+    metadata:
+      labels:
+        app: tech-app
+    spec:
+      containers:
+      - name: tech-app
+        image: kauan4453/tech-challenge
+        startupProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          failureThreshold: 12
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: tech-app-config
+              key: DATABASE_URL

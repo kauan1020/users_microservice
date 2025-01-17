@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from tech.core.domain.models import OrderStatus
+from tech.domain import OrderStatus
 from tests.adapters.driver.http.conftest import client, product
 
 
