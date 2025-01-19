@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import Mock
-from tech.core.domain.models import Products
-from tech.core.domain.schemas import ProductSchema
-from tech.core.app.use_cases.products_use_cases import ProductUseCase
+from tech.domain import Products
+from tech.interfaces.schemas import ProductSchema
+from tech.use_cases import ProductUseCase
 
 
 @pytest.fixture

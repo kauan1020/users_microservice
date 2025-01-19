@@ -15,16 +15,10 @@ RUN apt-get update && apt-get install -y \
 RUN curl -sSL https://install.python-poetry.org | python3 - \
     && ln -s /root/.local/bin/poetry /usr/local/bin/poetry
 
-RUN chmod +x /usr/local/bin/poetry
-RUN chmod -R 755 /root/.local/share/pypoetry
-RUN chmod +x /app/entrypoint.sh
-
-RUN poetry config installer.max-workers 10
-
 RUN poetry install --no-root --no-interaction --no-ansi
 
-RUN chmod -R 755 /app
+RUN pwd && ls -l /app
 
 EXPOSE 8000
 
-CMD ["poetry", "run", "uvicorn", "--host", "0.0.0.0", "tech.adapters.driver.http.app:app"]
+CMD ["sh", "-c", "cd /app && poetry run alembic upgrade head && poetry run uvicorn --host 0.0.0.0 --port 8000 tech.api.app:app"]

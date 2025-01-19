@@ -4,17 +4,17 @@ from sqlalchemy import StaticPool, create_engine
 from sqlalchemy.orm import Session
 from testcontainers.postgres import PostgresContainer
 
-from tech.adapters.driver.http.app import app
-from tech.adapters.driven.infra.database import get_session
-from tech.adapters.driven.infra.repositories.sql_alchemy_user_repository import SQLAlchemyUserRepository
-from tech.adapters.driven.infra.repositories.sql_alchemy_product_repository import SQLAlchemyProductRepository
-from tech.adapters.driven.infra.repositories.sql_alchemy_order_repository import SQLAlchemyOrderRepository
-from tech.adapters.driven.infra.repositories.sql_alchemy_models import table_registry
-from tech.core.domain.schemas import UserSchema, ProductSchema, OrderCreate, OrderStatusEnum
-from tech.core.app.use_cases.users_use_cases import UserUseCase
-from tech.core.app.use_cases.products_use_cases import ProductUseCase
-from tech.core.app.use_cases.orders_use_cases import OrderUseCase
-from tech.core.domain.models import Order, Products
+from tech.api.app import app
+from tech.infra.databases.database import get_session
+from tech.infra.repositories.sql_alchemy_user_repository import SQLAlchemyUserRepository
+from tech.infra.repositories import SQLAlchemyProductRepository
+from tech.infra.repositories import SQLAlchemyOrderRepository
+from tech.infra.repositories import table_registry
+from tech.interfaces.schemas import UserSchema, ProductSchema, OrderCreate, OrderStatusEnum
+from tech.use_cases import UserUseCase
+from tech.use_cases import ProductUseCase
+from tech.use_cases.orders_use_cases import OrderUseCase
+from tech.domain import Order, Products
 
 @pytest.fixture(scope='session')
 def engine():
