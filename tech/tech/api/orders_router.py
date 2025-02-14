@@ -1,151 +1,91 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from tech.infra.databases.database import get_session
-from tech.interfaces.schemas.order_schema import OrderCreate, OrderList, OrderPublic, OrderStatusEnum
-from tech.interfaces.schemas.message_schema import Message
+from tech.interfaces.gateways.order_gateway import OrderGateway
+from tech.interfaces.schemas.order_schema import OrderCreate, OrderStatusEnum
 from tech.use_cases.orders.create_order_use_case import CreateOrderUseCase
 from tech.use_cases.orders.list_orders_use_case import ListOrdersUseCase
 from tech.use_cases.orders.update_order_status_use_case import UpdateOrderStatusUseCase
 from tech.use_cases.orders.delete_order_use_case import DeleteOrderUseCase
-from tech.infra.repositories.sql_alchemy_order_repository import SQLAlchemyOrderRepository
-from tech.infra.repositories.sql_alchemy_product_repository import SQLAlchemyProductRepository
+from tech.interfaces.controllers.order_controller import OrderController
 
 router = APIRouter()
 
-
-def get_create_order_use_case(session: Session = Depends(get_session)):
+def get_order_controller(session: Session = Depends(get_session)) -> OrderController:
     """
-    Dependency injection for CreateOrderUseCase with repositories.
+    Dependency injection for the OrderController.
+
+    This function initializes the controller by injecting the necessary use cases
+    and the OrderGateway, ensuring proper separation of concerns.
 
     Args:
-        session (Session): SQLAlchemy session for database operations.
+        session (Session): SQLAlchemy database session.
 
     Returns:
-        CreateOrderUseCase: Use case instance configured with required repositories.
+        OrderController: Instance of OrderController with required dependencies.
     """
-    return CreateOrderUseCase(
-        SQLAlchemyOrderRepository(session),
-        SQLAlchemyProductRepository(session),
+    order_gateway = OrderGateway(session)
+    return OrderController(
+        create_order_use_case=CreateOrderUseCase(order_gateway),
+        list_orders_use_case=ListOrdersUseCase(order_gateway),
+        update_order_status_use_case=UpdateOrderStatusUseCase(order_gateway),
+        delete_order_use_case=DeleteOrderUseCase(order_gateway),
     )
 
-
-def get_list_orders_use_case(session: Session = Depends(get_session)):
+@router.post("/checkout", status_code=201)
+def create_order(order: OrderCreate, controller: OrderController = Depends(get_order_controller)) -> dict:
     """
-    Dependency injection for ListOrdersUseCase with repositories.
+    Creates a new order.
 
     Args:
-        session (Session): SQLAlchemy session for database operations.
+        order (OrderCreate): The order details to be created.
+        controller (OrderController): The OrderController instance.
 
     Returns:
-        ListOrdersUseCase: Use case instance configured with required repositories.
+        dict: The formatted response containing order details.
     """
-    return ListOrdersUseCase(
-        SQLAlchemyOrderRepository(session),
-        SQLAlchemyProductRepository(session),
-    )
+    return controller.create_order(order)
 
-
-def get_update_order_status_use_case(session: Session = Depends(get_session)):
+@router.get("/")
+def list_orders(limit: int = 10, skip: int = 0, controller: OrderController = Depends(get_order_controller)) -> list:
     """
-    Dependency injection for UpdateOrderStatusUseCase.
+    Retrieves a paginated list of orders.
 
     Args:
-        session (Session): SQLAlchemy session for database operations.
+        limit (int): The maximum number of orders to return.
+        skip (int): The number of orders to skip.
+        controller (OrderController): The OrderController instance.
 
     Returns:
-        UpdateOrderStatusUseCase: Use case instance configured with the order repository.
+        list: A list of formatted order details.
     """
-    return UpdateOrderStatusUseCase(SQLAlchemyOrderRepository(session))
+    return controller.list_orders(limit, skip)
 
-
-def get_delete_order_use_case(session: Session = Depends(get_session)):
+@router.put("/{order_id}")
+def update_order_status(order_id: int, status: OrderStatusEnum, controller: OrderController = Depends(get_order_controller)) -> dict:
     """
-    Dependency injection for DeleteOrderUseCase.
+    Updates the status of an order.
 
     Args:
-        session (Session): SQLAlchemy session for database operations.
+        order_id (int): The ID of the order to update.
+        status (OrderStatusEnum): The new status for the order.
+        controller (OrderController): The OrderController instance.
 
     Returns:
-        DeleteOrderUseCase: Use case instance configured with the order repository.
+        dict: A success message confirming the update.
     """
-    return DeleteOrderUseCase(SQLAlchemyOrderRepository(session))
+    return controller.update_order_status(order_id, status)
 
-
-@router.post("/checkout", response_model=OrderPublic, status_code=201)
-def create_order(order: OrderCreate, use_case: CreateOrderUseCase = Depends(get_create_order_use_case)):
+@router.delete("/{order_id}")
+def delete_order(order_id: int, controller: OrderController = Depends(get_order_controller)) -> dict:
     """
-    API endpoint for creating a new order (checkout).
+    Deletes an order by its ID.
 
     Args:
-        order (OrderCreate): The list of product IDs to include in the order.
-        use_case (CreateOrderUseCase): The use case for handling order creation.
+        order_id (int): The ID of the order to delete.
+        controller (OrderController): The OrderController instance.
 
     Returns:
-        OrderPublic: The created order's public details.
-
-    Raises:
-        HTTPException: If any of the products are not found.
+        dict: A success message confirming deletion.
     """
-    try:
-        return use_case.execute(order)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-
-@router.get("/", response_model=OrderList)
-def list_orders(limit: int = 10, skip: int = 0, use_case: ListOrdersUseCase = Depends(get_list_orders_use_case)):
-    """
-    List all orders with pagination.
-
-    Args:
-        limit (int): Maximum number of orders to retrieve. Defaults to 10.
-        skip (int): Number of orders to skip before starting retrieval. Defaults to 0.
-        use_case (ListOrdersUseCase): Use case to handle the business logic for listing orders.
-
-    Returns:
-        OrderList: Paginated list of orders.
-    """
-    return {"orders": use_case.execute(limit, skip)}
-
-
-@router.put("/{order_id}", status_code=200)
-def update_order_status(order_id: int, status: OrderStatusEnum, use_case: UpdateOrderStatusUseCase = Depends(get_update_order_status_use_case)):
-    """
-    Update the status of an order.
-
-    Args:
-        order_id (int): ID of the order to update.
-        status (OrderStatusEnum): New status to assign to the order.
-        use_case (UpdateOrderStatusUseCase): Use case to handle the business logic for updating order status.
-
-    Returns:
-        dict: A success message.
-
-    Raises:
-        HTTPException: If the order is not found or the update fails.
-    """
-    try:
-        return use_case.execute(order_id, status)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-
-@router.delete("/{order_id}", response_model=Message)
-def delete_order(order_id: int, use_case: DeleteOrderUseCase = Depends(get_delete_order_use_case)):
-    """
-    Delete an order by ID.
-
-    Args:
-        order_id (int): ID of the order to delete.
-        use_case (DeleteOrderUseCase): Use case to handle the business logic for deleting orders.
-
-    Returns:
-        Message: A success message confirming deletion.
-
-    Raises:
-        HTTPException: If the order is not found.
-    """
-    try:
-        return use_case.execute(order_id)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    return controller.delete_order(order_id)

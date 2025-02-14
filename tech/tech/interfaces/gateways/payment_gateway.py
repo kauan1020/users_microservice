@@ -1,41 +1,54 @@
-from tech.domain.entities.payments import Payment, PaymentStatus
+from sqlalchemy.orm import Session
+from tech.domain.entities.payments import Payment
+from tech.interfaces.repositories.payment_repository import PaymentRepository
+from tech.infra.repositories.sql_alchemy_payment_repository import SQLAlchemyPaymentRepository
 
-
-class PaymentGateway(object):
+class PaymentGateway(PaymentRepository):
     """
-    Interface for the Payment Gateway.
-
-    This interface defines the methods for creating and retrieving payment status.
-    Concrete implementations must adhere to this interface.
+    Gateway that acts as an adapter between use cases and the database repository.
     """
 
-    def create_payment(self, order_id: int, amount: float) -> Payment:
+    def __init__(self, session: Session):
         """
-        Creates a payment request for a specific order.
+        Initializes the PaymentGateway with a database session.
 
         Args:
-            order_id (int): The ID of the associated order.
-            amount (float): The amount to be charged for the order.
-
-        Returns:
-            Payment: A Payment entity with the created payment details.
-
-        Raises:
-            NotImplementedError: If not implemented by a concrete class.
+            session (Session): The SQLAlchemy session used for database transactions.
         """
-        raise NotImplementedError
+        self.repository = SQLAlchemyPaymentRepository(session)
 
-    def get_payment_status(self, order_id: int) -> PaymentStatus:
+    def add(self, payment: Payment) -> Payment:
         """
-        Retrieves the payment status for a specific order.
+        Adds a new payment to the repository.
 
         Args:
-            order_id (int): The ID of the associated order.
+            payment (Payment): The payment entity to be added.
 
         Returns:
-            PaymentStatus: The current status of the payment.
-
-        Raises:
-            NotImplementedError: If not implemented by a concrete class.
+            Payment: The added payment with an assigned ID.
         """
-        raise NotImplementedError
+        return self.repository.add(payment)
+
+    def get_by_order_id(self, order_id: int) -> Payment:
+        """
+        Retrieves a payment by its order ID.
+
+        Args:
+            order_id (int): The unique identifier of the order.
+
+        Returns:
+            Payment: The payment entity if found, otherwise None.
+        """
+        return self.repository.get_by_order_id(order_id)
+
+    def update(self, payment: Payment) -> Payment:
+        """
+        Updates an existing payment's information.
+
+        Args:
+            payment (Payment): The payment entity with updated information.
+
+        Returns:
+            Payment: The updated payment entity.
+        """
+        return self.repository.update(payment)

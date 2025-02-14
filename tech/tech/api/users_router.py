@@ -1,171 +1,137 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from tech.infra.databases.database import get_session
-from tech.interfaces.schemas.user_schema import UserSchema, UserPublic, UserList
-from tech.interfaces.schemas.message_schema import Message
+from tech.interfaces.gateways.user_gateway import UserGateway
+from tech.interfaces.schemas.user_schema import UserSchema
 from tech.use_cases.users.create_user_use_case import CreateUserUseCase
 from tech.use_cases.users.list_users_use_case import ListUsersUseCase
 from tech.use_cases.users.get_user_use_case import GetUserUseCase
 from tech.use_cases.users.get_user_by_cpf_use_case import GetUserByCpfUseCase
 from tech.use_cases.users.update_user_use_case import UpdateUserUseCase
 from tech.use_cases.users.delete_user_use_case import DeleteUserUseCase
-from tech.infra.repositories.sql_alchemy_user_repository import SQLAlchemyUserRepository
+from tech.interfaces.controllers.user_controller import UserController
 
 router = APIRouter()
 
-def get_user_repository(session: Session = Depends(get_session)) -> SQLAlchemyUserRepository:
+def get_user_controller(session: Session = Depends(get_session)) -> UserController:
     """
-    Provides an instance of SQLAlchemyUserRepository for dependency injection.
+    Creates and injects an instance of UserController with its required dependencies.
 
     Args:
-        session (Session): A SQLAlchemy session for database operations.
+        session (Session): The SQLAlchemy session for database operations.
 
     Returns:
-        SQLAlchemyUserRepository: A repository instance for user-related operations.
+        UserController: The controller instance containing all user-related use cases.
     """
-    return SQLAlchemyUserRepository(session)
+    user_gateway = UserGateway(session)
+    return UserController(
+        create_user_use_case=CreateUserUseCase(user_gateway),
+        list_users_use_case=ListUsersUseCase(user_gateway),
+        get_user_use_case=GetUserUseCase(user_gateway),
+        get_user_by_cpf_use_case=GetUserByCpfUseCase(user_gateway),
+        update_user_use_case=UpdateUserUseCase(user_gateway),
+        delete_user_use_case=DeleteUserUseCase(user_gateway),
+    )
 
-@router.post('/', response_model=UserPublic, status_code=201)
-def create_user(
-    user: UserSchema,
-    repository: SQLAlchemyUserRepository = Depends(get_user_repository)
-):
+@router.post("/", status_code=201)
+def create_user(user: UserSchema, controller: UserController = Depends(get_user_controller)):
     """
-    Creates a new user in the system.
+    API endpoint to create a new user.
 
     Args:
-        user (UserSchema): The data required to create the new user.
-        repository (SQLAlchemyUserRepository): The user repository for data operations.
+        user (UserSchema): The user's data required for registration.
+        controller (UserController): The controller responsible for processing the request.
 
     Returns:
-        UserPublic: The created user's public information.
-
-    Raises:
-        HTTPException: If the CPF is invalid or if a user with the same username, email, or CPF already exists.
+        dict: The created user's public information.
     """
-    try:
-        use_case = CreateUserUseCase(repository)
-        created_user = use_case.execute(user)
-        return created_user
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    return controller.create_user(user)
 
-@router.get('/', response_model=UserList)
-def list_users(
-    limit: int = 10,
-    skip: int = 0,
-    repository: SQLAlchemyUserRepository = Depends(get_user_repository)
-):
+@router.get("/{user_id}")
+def get_user(user_id: int, controller: UserController = Depends(get_user_controller)):
     """
-    Retrieves a paginated list of users.
+    API endpoint to retrieve a user by their unique ID.
 
     Args:
-        limit (int): The maximum number of users to return. Defaults to 10.
-        skip (int): The number of users to skip. Defaults to 0.
-        repository (SQLAlchemyUserRepository): The user repository for data operations.
+        user_id (int): The unique identifier of the user.
+        controller (UserController): The controller responsible for processing the request.
 
     Returns:
-        UserList: A list of users with their public information.
-    """
-    use_case = ListUsersUseCase(repository)
-    users = use_case.execute(limit, skip)
-    return {'users': users}
-
-@router.get('/{user_id}', response_model=UserPublic)
-def get_user(
-    user_id: int,
-    repository: SQLAlchemyUserRepository = Depends(get_user_repository)
-):
-    """
-    Retrieves a user by their unique ID.
-
-    Args:
-        user_id (int): The ID of the user to retrieve.
-        repository (SQLAlchemyUserRepository): The user repository for data operations.
-
-    Returns:
-        UserPublic: The user's public information.
+        dict: The retrieved user's public information.
 
     Raises:
         HTTPException: If no user is found with the given ID.
     """
-    try:
-        use_case = GetUserUseCase(repository)
-        return use_case.execute(user_id)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    return controller.get_user(user_id)
 
-@router.get('/cpf/{cpf}', response_model=UserPublic)
-def get_user_by_cpf(
-    cpf: str,
-    repository: SQLAlchemyUserRepository = Depends(get_user_repository)
-):
+@router.get("/cpf/{cpf}")
+def get_user_by_cpf(cpf: str, controller: UserController = Depends(get_user_controller)):
     """
-    Retrieves a user by their CPF.
+    API endpoint to retrieve a user by their CPF.
 
     Args:
-        cpf (str): The CPF of the user to retrieve.
-        repository (SQLAlchemyUserRepository): The user repository for data operations.
+        cpf (str): The CPF (Cadastro de Pessoas Físicas) of the user.
+        controller (UserController): The controller responsible for processing the request.
 
     Returns:
-        UserPublic: The user's public information.
+        dict: The retrieved user's public information.
 
     Raises:
         HTTPException: If no user is found with the given CPF.
     """
-    try:
-        use_case = GetUserByCpfUseCase(repository)
-        return use_case.execute(cpf)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    return controller.get_user_by_cpf(cpf)
 
-@router.put('/{user_id}', response_model=UserPublic)
-def update_user(
-    user_id: int,
-    user: UserSchema,
-    repository: SQLAlchemyUserRepository = Depends(get_user_repository)
+@router.get("/")
+def list_users(
+    limit: int = 10,
+    skip: int = 0,
+    controller: UserController = Depends(get_user_controller)
 ):
     """
-    Updates a user's information.
+    API endpoint to retrieve a list of users with pagination.
 
     Args:
-        user_id (int): The ID of the user to update.
+        limit (int): The maximum number of users to return. Defaults to 10.
+        skip (int): The number of users to skip before retrieving. Defaults to 0.
+        controller (UserController): The controller responsible for processing the request.
+
+    Returns:
+        dict: A paginated list of users.
+    """
+    return controller.list_users(limit, skip)
+
+
+@router.put("/{user_id}")
+def update_user(user_id: int, user: UserSchema, controller: UserController = Depends(get_user_controller)):
+    """
+    API endpoint to update a user's information.
+
+    Args:
+        user_id (int): The unique identifier of the user.
         user (UserSchema): The updated user information.
-        repository (SQLAlchemyUserRepository): The user repository for data operations.
+        controller (UserController): The controller responsible for processing the request.
 
     Returns:
-        UserPublic: The updated user's public information.
+        dict: The updated user's public information.
 
     Raises:
-        HTTPException: If no user is found with the given ID or if the update fails.
+        HTTPException: If the user is not found or if the update fails.
     """
-    try:
-        use_case = UpdateUserUseCase(repository)
-        updated_user = use_case.execute(user_id, user)
-        return updated_user
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    return controller.update_user(user_id, user)
 
-@router.delete('/{user_id}', response_model=Message)
-def delete_user(
-    user_id: int,
-    repository: SQLAlchemyUserRepository = Depends(get_user_repository)
-):
+@router.delete("/{user_id}")
+def delete_user(user_id: int, controller: UserController = Depends(get_user_controller)):
     """
-    Deletes a user by their unique ID.
+    API endpoint to delete a user by their unique ID.
 
     Args:
-        user_id (int): The ID of the user to delete.
-        repository (SQLAlchemyUserRepository): The user repository for data operations.
+        user_id (int): The unique identifier of the user.
+        controller (UserController): The controller responsible for processing the request.
 
     Returns:
-        Message: A confirmation message indicating the user was deleted.
+        dict: A confirmation message indicating the user was deleted.
 
     Raises:
-        HTTPException: If no user is found with the given ID.
+        HTTPException: If the user is not found.
     """
-    try:
-        use_case = DeleteUserUseCase(repository)
-        return use_case.execute(user_id)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    return controller.delete_user(user_id)
