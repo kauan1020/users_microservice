@@ -1,132 +1,132 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from tech.infra.databases.database import get_session
-from tech.interfaces.schemas.product_schema import ProductSchema, ProductPublic
-from tech.interfaces.schemas.message_schema import Message
+from tech.interfaces.gateways.product_gateway import ProductGateway
+from tech.interfaces.schemas.product_schema import ProductSchema
 from tech.use_cases.products.create_product_use_case import CreateProductUseCase
 from tech.use_cases.products.list_products_by_category_use_case import ListProductsByCategoryUseCase
 from tech.use_cases.products.list_all_products_use_case import ListAllProductsUseCase
 from tech.use_cases.products.update_product_use_case import UpdateProductUseCase
 from tech.use_cases.products.delete_product_use_case import DeleteProductUseCase
-from tech.infra.repositories.sql_alchemy_product_repository import SQLAlchemyProductRepository
+from tech.interfaces.controllers.product_controller import ProductController
 
 router = APIRouter()
 
-def get_product_repository(session: Session = Depends(get_session)) -> SQLAlchemyProductRepository:
+def get_product_controller(session: Session = Depends(get_session)) -> ProductController:
     """
-    Dependency injection for SQLAlchemyProductRepository.
+    Dependency injection for the ProductController.
+
+    This function initializes the controller by injecting the necessary use cases
+    and the ProductGateway, ensuring proper separation of concerns.
 
     Args:
-        session (Session): SQLAlchemy session for database operations.
+        session (Session): SQLAlchemy database session.
 
     Returns:
-        SQLAlchemyProductRepository: Repository instance for product-related operations.
+        ProductController: Instance of ProductController with required dependencies.
     """
-    return SQLAlchemyProductRepository(session)
+    product_gateway = ProductGateway(session)
+    return ProductController(
+        create_product_use_case=CreateProductUseCase(product_gateway),
+        list_products_by_category_use_case=ListProductsByCategoryUseCase(product_gateway),
+        list_all_products_use_case=ListAllProductsUseCase(product_gateway),
+        update_product_use_case=UpdateProductUseCase(product_gateway),
+        delete_product_use_case=DeleteProductUseCase(product_gateway),
+    )
 
-@router.post('/', response_model=ProductPublic, status_code=201)
-def create_product(product: ProductSchema, repo: SQLAlchemyProductRepository = Depends(get_product_repository)):
+@router.post('/', status_code=201)
+def create_product(
+    product: ProductSchema,
+    controller: ProductController = Depends(get_product_controller)
+) -> dict:
     """
-    Create a new product.
+    Creates a new product.
 
     Args:
-        product (ProductSchema): Product creation details.
-        repo (SQLAlchemyProductRepository): Repository for product data operations.
+        product (ProductSchema): The product details to be created.
+        controller (ProductController): The ProductController instance.
 
     Returns:
-        ProductPublic: Details of the newly created product.
-
-    Raises:
-        HTTPException: If a product with the same name already exists.
+        dict: The formatted response containing product details.
     """
-    use_case = CreateProductUseCase(repo)
-    try:
-        created_product = use_case.execute(product)
-        return created_product
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    return controller.create_product(product)
 
-@router.get('/{category}', response_model=list[ProductPublic])
-def list_products_by_category(category: str, repo: SQLAlchemyProductRepository = Depends(get_product_repository)):
+@router.get('/{category}')
+def list_products_by_category(
+    category: str,
+    controller: ProductController = Depends(get_product_controller)
+) -> list:
     """
-    Retrieve a list of products by category.
+    Retrieves a list of products filtered by category.
 
     Args:
         category (str): The category to filter products by.
-        repo (SQLAlchemyProductRepository): Repository for product data operations.
+        controller (ProductController): The ProductController instance.
 
     Returns:
-        list[ProductPublic]: List of products in the specified category.
+        list: A list of formatted product details.
 
     Raises:
         HTTPException: If no products are found in the specified category.
     """
-    use_case = ListProductsByCategoryUseCase(repo)
-    products = use_case.execute(category)
-    if not products:
-        raise HTTPException(status_code=404, detail=f'No products found in category "{category}"')
-    return products
+    return controller.list_products_by_category(category)
 
-@router.get('/', response_model=list[ProductPublic])
-def list_all_products(repo: SQLAlchemyProductRepository = Depends(get_product_repository)):
+@router.get('/')
+def list_all_products(
+    controller: ProductController = Depends(get_product_controller)
+) -> list:
     """
-    Retrieve a list of all products.
+    Retrieves all available products.
 
     Args:
-        repo (SQLAlchemyProductRepository): Repository for product data operations.
+        controller (ProductController): The ProductController instance.
 
     Returns:
-        list[ProductPublic]: List of all products.
+        list: A list of formatted product details.
 
     Raises:
         HTTPException: If no products are found.
     """
-    use_case = ListAllProductsUseCase(repo)
-    products = use_case.execute()
-    if not products:
-        raise HTTPException(status_code=404, detail="No products found")
-    return products
+    return controller.list_all_products()
 
-@router.put('/{product_id}', response_model=ProductPublic)
-def update_product(product_id: int, product: ProductSchema, repo: SQLAlchemyProductRepository = Depends(get_product_repository)):
+@router.put('/{product_id}')
+def update_product(
+    product_id: int,
+    product: ProductSchema,
+    controller: ProductController = Depends(get_product_controller)
+) -> dict:
     """
-    Update a product's information.
+    Updates a product by its ID.
 
     Args:
-        product_id (int): ID of the product to update.
-        product (ProductSchema): Updated product information.
-        repo (SQLAlchemyProductRepository): Repository for product data operations.
+        product_id (int): The ID of the product to update.
+        product (ProductSchema): The updated product details.
+        controller (ProductController): The ProductController instance.
 
     Returns:
-        ProductPublic: Details of the updated product.
+        dict: The formatted response containing the updated product details.
 
     Raises:
         HTTPException: If the product is not found.
     """
-    use_case = UpdateProductUseCase(repo)
-    try:
-        updated_product = use_case.execute(product_id, product)
-        return updated_product
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    return controller.update_product(product_id, product)
 
-@router.delete('/{product_id}', response_model=Message)
-def delete_product(product_id: int, repo: SQLAlchemyProductRepository = Depends(get_product_repository)):
+@router.delete('/{product_id}')
+def delete_product(
+    product_id: int,
+    controller: ProductController = Depends(get_product_controller)
+) -> dict:
     """
-    Delete a product by ID.
+    Deletes a product by its ID.
 
     Args:
-        product_id (int): ID of the product to delete.
-        repo (SQLAlchemyProductRepository): Repository for product data operations.
+        product_id (int): The ID of the product to delete.
+        controller (ProductController): The ProductController instance.
 
     Returns:
-        Message: A success message confirming deletion.
+        dict: A success message confirming deletion.
 
     Raises:
         HTTPException: If the product is not found.
     """
-    use_case = DeleteProductUseCase(repo)
-    try:
-        return use_case.execute(product_id)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    return controller.delete_product(product_id)

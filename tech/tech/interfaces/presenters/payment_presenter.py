@@ -1,22 +1,19 @@
-class PaymentPresenter(object):
+class PaymentPresenter:
     """
-    Formats the output for payment-related use cases.
-
-    Methods:
-        present_payment_status(order_id: int, status: str): Formats the payment status response.
+    Handles the formatting of payment-related responses.
     """
 
     @staticmethod
     def present_payment_status(order_id: int, status: str) -> dict:
         """
-        Formats the payment status response.
+        Formats a payment status response.
 
         Args:
-            order_id (int): The ID of the associated order.
-            status (str): The current status of the payment.
+            order_id (int): The order ID associated with the payment.
+            status (str): The current payment status.
 
         Returns:
-            dict: A dictionary containing the order ID and payment status.
+            dict: A dictionary containing the formatted payment details.
         """
         return {
             "order_id": order_id,

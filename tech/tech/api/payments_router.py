@@ -1,143 +1,71 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-
 from tech.infra.databases.database import get_session
-from tech.domain.entities.payments import PaymentStatus
-from tech.infra.repositories.sql_alchemy_order_repository import SQLAlchemyOrderRepository
-from tech.infra.repositories.sql_alchemy_payment_repository import SQLAlchemyPaymentRepository
-from tech.interfaces.schemas.payment_schema import PaymentCreate, PaymentStatusResponse
+from tech.interfaces.gateways.payment_gateway import PaymentGateway
+from tech.interfaces.schemas.payment_schema import PaymentCreate
 from tech.use_cases.payments.create_payment_use_case import CreatePaymentUseCase
 from tech.use_cases.payments.get_payment_status_use_case import GetPaymentStatusUseCase
 from tech.use_cases.payments.webhook_payment_use_case import WebhookHandlerUseCase
-from tech.interfaces.gateways.mock_payment_gateway import MockPaymentGateway
+from tech.interfaces.controllers.payment_controller import PaymentController
 
 router = APIRouter()
 
-
-def get_create_payment_use_case(
-    session: Session = Depends(get_session)
-) -> CreatePaymentUseCase:
+def get_payment_controller(session: Session = Depends(get_session)) -> PaymentController:
     """
-    Provides an instance of CreatePaymentUseCase with required dependencies.
+    Dependency injection for the PaymentController.
 
     Args:
-        session (Session): SQLAlchemy session dependency.
+        session (Session): SQLAlchemy database session.
 
     Returns:
-        CreatePaymentUseCase: The use case for creating payments.
+        PaymentController: Instance of PaymentController with required dependencies.
     """
-    return CreatePaymentUseCase(
-        payment_gateway=MockPaymentGateway(),
-        order_repository=SQLAlchemyOrderRepository(session),
-        payment_repository=SQLAlchemyPaymentRepository(session),
+    payment_gateway = PaymentGateway(session)
+    return PaymentController(
+        create_payment_use_case=CreatePaymentUseCase(payment_gateway),
+        get_payment_status_use_case=GetPaymentStatusUseCase(payment_gateway),
+        webhook_handler_use_case=WebhookHandlerUseCase(payment_gateway),
     )
 
-
-def get_get_payment_status_use_case(
-    session: Session = Depends(get_session)
-) -> GetPaymentStatusUseCase:
+@router.post("/payments", status_code=201)
+def create_payment(payment_data: PaymentCreate, controller: PaymentController = Depends(get_payment_controller)) -> dict:
     """
-    Provides an instance of GetPaymentStatusUseCase with required dependencies.
+    Creates a new payment.
 
     Args:
-        session (Session): SQLAlchemy session dependency.
+        payment_data (PaymentCreate): The payment details to be created.
+        controller (PaymentController): The PaymentController instance.
 
     Returns:
-        GetPaymentStatusUseCase: The use case for retrieving payment status.
+        dict: The formatted response containing payment details.
     """
-    return GetPaymentStatusUseCase(
-        payment_repository=SQLAlchemyPaymentRepository(session)
-    )
+    return controller.create_payment(payment_data)
 
-
-def get_webhook_handler_use_case(
-    session: Session = Depends(get_session)
-) -> WebhookHandlerUseCase:
+@router.get("/payments/{order_id}")
+def get_payment_status(order_id: int, controller: PaymentController = Depends(get_payment_controller)) -> dict:
     """
-    Provides an instance of WebhookHandlerUseCase with required dependencies.
+    Retrieves the payment status of an order.
 
     Args:
-        session (Session): SQLAlchemy session dependency.
+        order_id (int): The order ID.
+        controller (PaymentController): The PaymentController instance.
 
     Returns:
-        WebhookHandlerUseCase: The use case for handling webhook updates.
+        dict: The formatted response containing payment status.
     """
-    return WebhookHandlerUseCase(
-        payment_repository=SQLAlchemyPaymentRepository(session)
-    )
+    return controller.get_payment_status(order_id)
 
-
-@router.post('/payments', response_model=PaymentStatusResponse, status_code=201)
-def create_payment(
-    payment_data: PaymentCreate,
-    use_case: CreatePaymentUseCase = Depends(get_create_payment_use_case),
-):
+@router.post("/webhook")
+def webhook_payment(order_id: int, status: str, controller: PaymentController = Depends(get_payment_controller)) -> dict:
     """
-    API endpoint to create a payment for an order.
+    Handles payment status updates via webhook.
 
     Args:
-        payment_data (PaymentCreate): Data for creating the payment.
-        use_case (CreatePaymentUseCase): Use case instance for creating payments.
-
-    Returns:
-        PaymentStatusResponse: Response with the payment details.
-    """
-    payment = use_case.execute(payment_data)
-    return {
-        "order_id": payment.order_id,
-        "status": payment.status.value,
-    }
-
-
-@router.get('/payments/{order_id}', response_model=PaymentStatusResponse)
-def get_payment_status(
-    order_id: int,
-    use_case: GetPaymentStatusUseCase = Depends(get_get_payment_status_use_case),
-):
-    """
-    API endpoint to retrieve the payment status of an order.
-
-    Args:
-        order_id (int): The ID of the order.
-        use_case (GetPaymentStatusUseCase): Use case instance for retrieving payment status.
-
-    Returns:
-        PaymentStatusResponse: The order ID and the current payment status.
-    """
-    try:
-        status = use_case.execute(order_id)
-        return {"order_id": order_id, "status": status.name}
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-
-@router.post('/webhook', status_code=200)
-def webhook_payment(
-    order_id: int,
-    status: str,
-    use_case: WebhookHandlerUseCase = Depends(get_webhook_handler_use_case),
-):
-    """
-    API endpoint to handle webhook payment status updates.
-
-    Args:
-        order_id (int): The ID of the order.
-        status (str): The new payment status (approved/rejected).
-        use_case (WebhookHandlerUseCase): Use case instance for handling webhook updates.
+        order_id (int): The order ID.
+        status (str): The new payment status.
+        controller (PaymentController): The PaymentController instance.
 
     Returns:
         dict: The updated payment status.
-
-    Raises:
-        HTTPException: If the payment is not found or if the status is invalid.
     """
-    try:
-        payment_status = PaymentStatus(status)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid payment status")
-
-    try:
-        updated_payment = use_case.execute(order_id, payment_status)
-        return {"order_id": updated_payment.order_id, "status": updated_payment.status.value}
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    return controller.webhook_payment(order_id, status)
