@@ -92,7 +92,6 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: 264591339294.dkr.ecr.us-east-1.amazonaws.com/tech-challenge:latest, 264591339294.dkr.ecr.us-east-1.amazonaws.com/tech-challenge:${{ github.sha }}
-          # Disable registry caching to avoid ECR issues
           no-cache: false
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
@@ -138,10 +137,6 @@ jobs:
           kubectl apply -f tech/k8s/configmap.yaml
           kubectl apply -f tech/k8s/deployment.yaml
           kubectl apply -f tech/k8s/service.yaml
-          kubectl apply -f tech/k8s/postgres-deployment.yaml
-          kubectl apply -f tech/k8s/postgres-pv.yaml
-          kubectl apply -f tech/k8s/postgres-service.yaml
-          kubectl apply -f tech/k8s/tech-app-hpa.yaml
 
       - name: Restart deployment to pull latest image
         run: |
