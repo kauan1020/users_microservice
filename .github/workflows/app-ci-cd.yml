@@ -27,7 +27,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          poetry install
+          # Cache Poetry dependencies
+          poetry config virtualenvs.in-project true
+          
+          # Install all dependencies from pyproject.toml
+          poetry install --no-interaction --no-ansi
 
       - name: Run tests with pytest
         run: |
