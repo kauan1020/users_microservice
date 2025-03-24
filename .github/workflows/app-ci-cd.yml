@@ -20,15 +20,18 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install pytest
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          poetry install
 
       - name: Run tests with pytest
         run: |
-          pytest
+          poetry run pytest
 
   deploy_manifests:
     name: Deploy Kubernetes Manifests
@@ -75,7 +78,6 @@ jobs:
       - name: Verify applied manifests
         if: steps.check_changes.outputs.k8s_changes == 'true'
         run: |
-          echo "Kubernetes manifests have been applied"
           kubectl get namespace tech-namespace
           kubectl get configmap -n tech-namespace
           kubectl get deployment -n tech-namespace
@@ -149,7 +151,6 @@ jobs:
       - name: Get service URL
         if: steps.check_changes.outputs.code_changes == 'true' && success()
         run: |
-          echo "Application deployed! Access it via:"
           kubectl get svc tech-app-service -n tech-namespace -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"
 
   verify_deployment:
@@ -172,20 +173,9 @@ jobs:
 
       - name: Check deployment status
         run: |
-          echo "Cluster status:"
           kubectl get nodes
-          
-          echo "Namespace status:"
           kubectl get namespace tech-namespace
-          
-          echo "Deployment status:"
           kubectl get deployment -n tech-namespace
-          
-          echo "Pod status:"
           kubectl get pods -n tech-namespace
-          
-          echo "Service status:"
           kubectl get svc -n tech-namespace
-          
-          echo "Application URL:"
           kubectl get svc tech-app-service -n tech-namespace -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"
