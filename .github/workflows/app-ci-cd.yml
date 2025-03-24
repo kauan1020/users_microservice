@@ -27,67 +27,18 @@ jobs:
 
       - name: Install dependencies
         run: |
+          cd tech
           poetry config virtualenvs.in-project true
-          
           poetry install --no-root --no-interaction --no-ansi
 
       - name: Run tests with pytest
         run: |
-          poetry run pytest
+          cd tech
+          $HOME/.local/bin/poetry run pytest
 
-  deploy_manifests:
-    name: Deploy Kubernetes Manifests
+  build_image:
+    name: Build and Push Image
     needs: test
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
-
-      - name: Check for manifest changes
-        id: check_changes
-        run: |
-          if git diff --name-only HEAD^ HEAD | grep -q "^tech/k8s/"; then
-            echo "k8s_changes=true" >> $GITHUB_OUTPUT
-          else
-            echo "k8s_changes=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Configure AWS credentials
-        if: steps.check_changes.outputs.k8s_changes == 'true'
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: us-east-1
-
-      - name: Configure kubectl
-        if: steps.check_changes.outputs.k8s_changes == 'true'
-        run: |
-          aws eks update-kubeconfig --region us-east-1 --name tech-eks-cluster
-
-      - name: Apply Kubernetes manifests
-        if: steps.check_changes.outputs.k8s_changes == 'true'
-        run: |
-          kubectl apply -f tech/k8s/namespace.yaml
-          kubectl apply -f tech/k8s/configmap.yaml
-          kubectl apply -f tech/k8s/deployment.yaml
-          kubectl apply -f tech/k8s/service.yaml
-
-      - name: Verify applied manifests
-        if: steps.check_changes.outputs.k8s_changes == 'true'
-        run: |
-          kubectl get namespace tech-namespace
-          kubectl get configmap -n tech-namespace
-          kubectl get deployment -n tech-namespace
-          kubectl get service -n tech-namespace
-
-  build_and_deploy:
-    name: Build Image and Deploy
-    needs: [test, deploy_manifests]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
@@ -128,37 +79,66 @@ jobs:
         if: steps.check_changes.outputs.code_changes == 'true'
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: ./tech
           push: true
           platforms: linux/amd64
           tags: 264591339294.dkr.ecr.us-east-1.amazonaws.com/tech-challenge:latest, 264591339294.dkr.ecr.us-east-1.amazonaws.com/tech-challenge:${{ github.sha }}
           cache-from: type=registry,ref=264591339294.dkr.ecr.us-east-1.amazonaws.com/tech-challenge:buildcache
           cache-to: type=registry,ref=264591339294.dkr.ecr.us-east-1.amazonaws.com/tech-challenge:buildcache,mode=max
 
-      - name: Configure kubectl
+      - name: Set build status
+        id: build_status
         if: steps.check_changes.outputs.code_changes == 'true'
+        run: |
+          echo "build_completed=true" >> $GITHUB_OUTPUT
+
+  deploy:
+    name: Deploy to Kubernetes
+    needs: build_image
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Configure kubectl
         run: |
           aws eks update-kubeconfig --region us-east-1 --name tech-eks-cluster
 
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f tech/k8s/namespace.yaml
+          kubectl apply -f tech/k8s/configmap.yaml
+          kubectl apply -f tech/k8s/deployment.yaml
+          kubectl apply -f tech/k8s/service.yaml
+
       - name: Restart deployment to pull latest image
-        if: steps.check_changes.outputs.code_changes == 'true'
         run: |
           kubectl rollout restart deployment/tech-app -n tech-namespace
 
       - name: Wait for deployment to complete
-        if: steps.check_changes.outputs.code_changes == 'true'
         run: |
           kubectl rollout status deployment/tech-app -n tech-namespace --timeout=300s
 
       - name: Get service URL
-        if: steps.check_changes.outputs.code_changes == 'true' && success()
+        if: success()
         run: |
           kubectl get svc tech-app-service -n tech-namespace -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"
 
   verify_deployment:
     name: Verify Deployment Status
     if: github.event_name == 'workflow_dispatch'
-    needs: [deploy_manifests, build_and_deploy]
+    needs: deploy
     runs-on: ubuntu-latest
     steps:
       - name: Configure AWS credentials
