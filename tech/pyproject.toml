@@ -6,14 +6,19 @@ authors = ["KauanAdvolveAi <kauan.silva@advolve.ai>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = ">=3.10,<3.12"
+uvloop = "^0.17.0"
+httptools = "^0.5.0"
 fastapi = {extras = ["standard"], version = "^0.114.0"}
 sqlalchemy = "^2.0.34"
 psycopg2-binary = "^2.9.10"
 pydantic-settings = "^2.4.0"
 alembic = "^1.13.2"
 pwdlib = {extras = ["argon2"], version = "^0.2.1"}
-#psycopg = {extras = ["binary"], version = "^3.2.2"}
+psycopg = {extras = ["binary"], version = "^3.2.2"}
+psycopg-binary = "^3.2.4"
+boto3 = "^1.37.4"
+jose = "^1.0.0"
 
 
 [tool.poetry.group.dev.dependencies]

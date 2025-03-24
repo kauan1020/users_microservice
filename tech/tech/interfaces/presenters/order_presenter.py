@@ -17,7 +17,7 @@ class OrderPresenter:
         return {
             "id": order.id,
             "total_price": order.total_price,
-            "product_ids": order.product_ids,
+            "product_ids": order.products,
             "status": order.status
         }
 

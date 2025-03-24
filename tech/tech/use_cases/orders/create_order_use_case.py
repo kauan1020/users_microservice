@@ -20,6 +20,7 @@ class CreateOrderUseCase(object):
             product = self.product_repository.get_by_id(product_id)
             if not product:
                 raise ValueError(f"Product with ID {product_id} not found")
+
             total_price += product.price
             product_details.append({
                 "id": product.id,

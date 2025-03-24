@@ -4,4 +4,4 @@ metadata:
   name: tech-app-config
   namespace: tech-namespace
 data:
-  DATABASE_URL: postgresql://admin:admin@postgres:5432/admin
+  DATABASE_URL: postgresql+psycopg://postgres:postgres@tech-database-2-dev.cdpoovnehujg.us-east-1.rds.amazonaws.com:5432/postgres

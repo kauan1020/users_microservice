@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from tech.infra.databases.database import get_session
+from tech.interfaces.gateways.order_gateway import OrderGateway
 from tech.interfaces.gateways.payment_gateway import PaymentGateway
 from tech.interfaces.schemas.payment_schema import PaymentCreate
 from tech.use_cases.payments.create_payment_use_case import CreatePaymentUseCase
@@ -20,9 +21,10 @@ def get_payment_controller(session: Session = Depends(get_session)) -> PaymentCo
     Returns:
         PaymentController: Instance of PaymentController with required dependencies.
     """
+    order_gateway = OrderGateway(session)
     payment_gateway = PaymentGateway(session)
     return PaymentController(
-        create_payment_use_case=CreatePaymentUseCase(payment_gateway),
+        create_payment_use_case=CreatePaymentUseCase(payment_gateway, order_gateway, payment_gateway),
         get_payment_status_use_case=GetPaymentStatusUseCase(payment_gateway),
         webhook_handler_use_case=WebhookHandlerUseCase(payment_gateway),
     )

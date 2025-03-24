@@ -7,6 +7,7 @@ from tech.use_cases.orders.create_order_use_case import CreateOrderUseCase
 from tech.use_cases.orders.list_orders_use_case import ListOrdersUseCase
 from tech.use_cases.orders.update_order_status_use_case import UpdateOrderStatusUseCase
 from tech.use_cases.orders.delete_order_use_case import DeleteOrderUseCase
+from tech.infra.repositories.sql_alchemy_product_repository import SQLAlchemyProductRepository
 from tech.interfaces.controllers.order_controller import OrderController
 
 router = APIRouter()
@@ -25,12 +26,14 @@ def get_order_controller(session: Session = Depends(get_session)) -> OrderContro
         OrderController: Instance of OrderController with required dependencies.
     """
     order_gateway = OrderGateway(session)
+    product_repository = SQLAlchemyProductRepository(session)
     return OrderController(
-        create_order_use_case=CreateOrderUseCase(order_gateway),
-        list_orders_use_case=ListOrdersUseCase(order_gateway),
-        update_order_status_use_case=UpdateOrderStatusUseCase(order_gateway),
+        create_order_use_case=CreateOrderUseCase(order_gateway, product_repository),
+        list_orders_use_case=ListOrdersUseCase(order_gateway, product_repository),
+        update_order_status_use_case=UpdateOrderStatusUseCase(order_gateway, product_repository),
         delete_order_use_case=DeleteOrderUseCase(order_gateway),
     )
+
 
 @router.post("/checkout", status_code=201)
 def create_order(order: OrderCreate, controller: OrderController = Depends(get_order_controller)) -> dict:

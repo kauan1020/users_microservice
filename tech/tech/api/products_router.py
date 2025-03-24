@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from tech.infra.databases.database import get_session
 from tech.interfaces.gateways.product_gateway import ProductGateway
@@ -9,6 +9,7 @@ from tech.use_cases.products.list_all_products_use_case import ListAllProductsUs
 from tech.use_cases.products.update_product_use_case import UpdateProductUseCase
 from tech.use_cases.products.delete_product_use_case import DeleteProductUseCase
 from tech.interfaces.controllers.product_controller import ProductController
+from tech.interfaces.middlewares.admin_auth_middleware import admin_required
 
 router = APIRouter()
 
@@ -34,22 +35,24 @@ def get_product_controller(session: Session = Depends(get_session)) -> ProductCo
         delete_product_use_case=DeleteProductUseCase(product_gateway),
     )
 
-@router.post('/', status_code=201)
-def create_product(
-    product: ProductSchema,
+# Public routes - available for all users
+@router.get('/')
+def list_all_products(
     controller: ProductController = Depends(get_product_controller)
-) -> dict:
+) -> list:
     """
-    Creates a new product.
+    Retrieves all available products.
 
     Args:
-        product (ProductSchema): The product details to be created.
         controller (ProductController): The ProductController instance.
 
     Returns:
-        dict: The formatted response containing product details.
+        list: A list of formatted product details.
+
+    Raises:
+        HTTPException: If no products are found.
     """
-    return controller.create_product(product)
+    return controller.list_all_products()
 
 @router.get('/{category}')
 def list_products_by_category(
@@ -71,32 +74,34 @@ def list_products_by_category(
     """
     return controller.list_products_by_category(category)
 
-@router.get('/')
-def list_all_products(
-    controller: ProductController = Depends(get_product_controller)
-) -> list:
+# Admin-only routes - protected with admin authentication
+@router.post('/', status_code=201)
+def create_product(
+    product: ProductSchema,
+    controller: ProductController = Depends(get_product_controller),
+    _: bool = Depends(admin_required)  # Add admin authentication
+) -> dict:
     """
-    Retrieves all available products.
+    Creates a new product. Admin access only.
 
     Args:
+        product (ProductSchema): The product details to be created.
         controller (ProductController): The ProductController instance.
 
     Returns:
-        list: A list of formatted product details.
-
-    Raises:
-        HTTPException: If no products are found.
+        dict: The formatted response containing product details.
     """
-    return controller.list_all_products()
+    return controller.create_product(product)
 
 @router.put('/{product_id}')
 def update_product(
     product_id: int,
     product: ProductSchema,
-    controller: ProductController = Depends(get_product_controller)
+    controller: ProductController = Depends(get_product_controller),
+    _: bool = Depends(admin_required)  # Add admin authentication
 ) -> dict:
     """
-    Updates a product by its ID.
+    Updates a product by its ID. Admin access only.
 
     Args:
         product_id (int): The ID of the product to update.
@@ -114,10 +119,11 @@ def update_product(
 @router.delete('/{product_id}')
 def delete_product(
     product_id: int,
-    controller: ProductController = Depends(get_product_controller)
+    controller: ProductController = Depends(get_product_controller),
+    _: bool = Depends(admin_required)  # Add admin authentication
 ) -> dict:
     """
-    Deletes a product by its ID.
+    Deletes a product by its ID. Admin access only.
 
     Args:
         product_id (int): The ID of the product to delete.

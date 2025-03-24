@@ -1,4 +1,4 @@
-from tech.interfaces.schemas.order_schema import OrderStatusEnum
+from tech.interfaces.schemas.order_schema import OrderStatusEnum, OrderPublic
 from tech.interfaces.repositories.order_repository import OrderRepository
 from tech.interfaces.repositories.product_repository import ProductRepository
 
@@ -43,19 +43,17 @@ class ListOrdersUseCase(object):
                 self.product_repository.get_by_id(product_id) for product_id in product_ids
             ]
 
-            order_list.append({
-                "id": order.id,
-                "total_price": order.total_price,
-                "status": OrderStatusEnum(order.status.value),
-                "products": [
-                    {
-                        "id": product.id,
-                        "name": product.name,
-                        "price": product.price,
-                    } for product in product_details if product
-                ],
-                "created_at": order.created_at,
-                "updated_at": order.updated_at,
-            })
+            order_list.append(OrderPublic(
+                id=order.id,
+                total_price=order.total_price,
+                status=order.status.value,
+                products=[{
+                    "id": product.id,
+                    "name": product.name,
+                    "price": product.price,
+                } for product in product_details if product],
+                created_at=order.created_at,
+                updated_at=order.updated_at,
+            ))
 
         return order_list
