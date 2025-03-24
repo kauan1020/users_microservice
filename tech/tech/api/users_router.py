@@ -91,7 +91,7 @@ def list_users(
     API endpoint to retrieve a list of users with pagination.
 
     Args:
-        limit (int): The maximum number of users to return. Defaults to 10.
+        limit (int): The max number of users to return. Defaults to 10.
         skip (int): The number of users to skip before retrieving. Defaults to 0.
         controller (UserController): The controller responsible for processing the request.
 
