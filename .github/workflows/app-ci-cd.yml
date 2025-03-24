@@ -50,7 +50,7 @@ jobs:
       - name: Check for code changes
         id: check_changes
         run: |
-          if git diff --name-only HEAD^ HEAD | grep -v "^tech/k8s/" | grep -q .; then
+          if git diff --name-only HEAD^ HEAD | grep -v "^k8s/" | grep -q .; then
             echo "code_changes=true" >> $GITHUB_OUTPUT
           else
             echo "code_changes=false" >> $GITHUB_OUTPUT
@@ -134,10 +134,10 @@ jobs:
 
       - name: Apply Kubernetes manifests
         run: |
-          kubectl apply -f tech/k8s/namespace.yaml
-          kubectl apply -f tech/k8s/configmap.yaml
-          kubectl apply -f tech/k8s/deployment.yaml
-          kubectl apply -f tech/k8s/service.yaml
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
 
       - name: Restart deployment to pull latest image
         run: |
