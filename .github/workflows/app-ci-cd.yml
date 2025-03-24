@@ -75,6 +75,15 @@ jobs:
         if: steps.check_changes.outputs.code_changes == 'true'
         uses: docker/setup-buildx-action@v2
 
+      - name: Cache Docker layers
+        if: steps.check_changes.outputs.code_changes == 'true'
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Build and push Docker image
         if: steps.check_changes.outputs.code_changes == 'true'
         uses: docker/build-push-action@v4
@@ -83,8 +92,16 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: 264591339294.dkr.ecr.us-east-1.amazonaws.com/tech-challenge:latest, 264591339294.dkr.ecr.us-east-1.amazonaws.com/tech-challenge:${{ github.sha }}
-          cache-from: type=registry,ref=264591339294.dkr.ecr.us-east-1.amazonaws.com/tech-challenge:buildcache
-          cache-to: type=registry,ref=264591339294.dkr.ecr.us-east-1.amazonaws.com/tech-challenge:buildcache,mode=max
+          # Disable registry caching to avoid ECR issues
+          no-cache: false
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      - name: Move cache
+        if: steps.check_changes.outputs.code_changes == 'true'
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
       - name: Set build status
         id: build_status
