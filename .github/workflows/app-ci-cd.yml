@@ -128,9 +128,7 @@ jobs:
           
           # Aplicar configmap
           kubectl apply -f tech/k8s/configmap.yaml
-          
-          # Aplicar secrets
-          kubectl apply -f tech/k8s/secrets.yaml
+    
           
           # Aplicar PVC
           kubectl apply -f tech/k8s/PersistentVolumeClaim.yaml
