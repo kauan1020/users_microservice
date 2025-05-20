@@ -1,0 +1,6 @@
+projectKey=users_microservice
+serverUrl=http://host.docker.internal:9000
+serverVersion=25.5.0.107428
+dashboardUrl=http://host.docker.internal:9000/dashboard?id=users_microservice
+ceTaskId=04303b28-02f1-48de-a5f4-0e31804c8870
+ceTaskUrl=http://host.docker.internal:9000/api/ce/task?id=04303b28-02f1-48de-a5f4-0e31804c8870

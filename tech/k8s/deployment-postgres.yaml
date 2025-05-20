@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users-postgres
+  namespace: user-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users-postgres
+  template:
+    metadata:
+      labels:
+        app: users-postgres
+    spec:
+      containers:
+      - name: postgres
+        # Specify platform to ensure architecture compatibility
+        image: postgres:15-alpine
+        # Alternative approaches:
+        # 1. Use a specific architecture tag: postgres:latest@sha256:... (with correct SHA for your architecture)
+        # 2. Use multi-arch image: postgres:15
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: users-auth-secret
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: users-auth-secret
+              key: postgres-password
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: users-auth-secret
+              key: postgres-db
+        # Add this to prevent exec format error with entrypoint
+        # Only needed if you continue having architecture issues
+        command: ["/bin/sh"]
+        args: ["-c", "docker-entrypoint.sh postgres"]
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+          # Add subPath to prevent permission issues
+          subPath: postgres
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: postgres-data
+        persistentVolumeClaim:
+          claimName: users-postgres-pvc
+      - name: init-script
+        configMap:
+          name: users-db-init

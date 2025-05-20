@@ -1,0 +1,38 @@
+<testsuite name="features.auth.User Authentication" tests="3" errors="0" failures="0" skipped="0" time="0.094835" timestamp="2025-05-08T22:50:16.616794" hostname="MacBook-Air-de-Advolve.local"><testcase classname="features.auth.User Authentication" name="Successful login" status="passed" time="0.093369"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: Successful login
+    Given the system has a registered user with CPF "12345678901" and password "valid_password" ... passed in 0.000s
+    When the user attempts to log in with CPF "12345678901" and password "valid_password" ... passed in 0.093s
+    Then the login should be successful ... passed in 0.000s
+    And the user should receive a valid token ... passed in 0.000s
+    And the token should have an expiration time ... passed in 0.000s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase><testcase classname="features.auth.User Authentication" name="Failed login with incorrect password" status="passed" time="0.000704"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: Failed login with incorrect password
+    Given the system has a registered user with CPF "12345678901" and password "valid_password" ... passed in 0.000s
+    When the user attempts to log in with CPF "12345678901" and password "wrong_password" ... passed in 0.001s
+    Then the login should fail ... passed in 0.000s
+    And the auth error message should contain "Incorrect credentials" ... passed in 0.000s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase><testcase classname="features.auth.User Authentication" name="Failed login with non-existent user" status="passed" time="0.000762"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: Failed login with non-existent user
+    Given the system has a registered user with CPF "12345678901" and password "valid_password" ... passed in 0.000s
+    When the user attempts to log in with CPF "99999999999" and password "any_password" ... passed in 0.001s
+    Then the login should fail ... passed in 0.000s
+    And the auth error message should contain "User not found" ... passed in 0.000s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase></testsuite>

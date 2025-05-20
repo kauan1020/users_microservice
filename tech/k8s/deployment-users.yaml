@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users-auth-service
+  namespace: user-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users-auth-service
+  template:
+    metadata:
+      labels:
+        app: users-auth-service
+    spec:
+      containers:
+      - name: users-auth-service
+        image:  131793876715.dkr.ecr.us-east-1.amazonaws.com/microservices/users:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: users-auth-secret
+              key: database-url
+        - name: SERVICE_PRODUCTS_URL
+          value: http://products-service.products:8002
+        readinessProbe:
+          httpGet:
+            path: /docs
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /docs
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 15
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        command: ["uvicorn", "tech.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
