@@ -1,0 +1,48 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5432:5432"  # Porta padrão
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: users_auth  # Nome explícito do banco
+    volumes:
+      - users_postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres && psql -U postgres -c \"SELECT 1 FROM pg_database WHERE datname = 'users_auth'\""]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    container_name: users_postgres  # Nome explícito
+
+  migration:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@users_postgres:5432/users_auth
+    command: alembic upgrade head
+    depends_on:
+      postgres:
+        condition: service_healthy
+    container_name: users_migration
+
+  tech_app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@users_postgres:5432/users_auth
+      SERVICE_PRODUCTS_URL: http://localhost:8002  # Use localhost para comunicação externa
+    command: uvicorn tech.api.app:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+    container_name: users_tech_app
+
+volumes:
+  users_postgres_data:
+    name: users_postgres_data_volume  # Nome explícito para o volume
