@@ -54,8 +54,8 @@ class TestCognitoGateway:
         # Check that the gateway has the expected attributes
         assert self.gateway.region == "us-east-1"
         assert self.gateway.user_pool_id == "us-east-1_k6nq9jjr3"
-        assert self.gateway.client_id == "7krs58hvehmmanp97ig1h1lpqj"
-        assert self.gateway.client_secret == "lvojlqtnr3q9pjee4g1k2rt1pm461a0rl4nsslk6ud5pt0il8am"
+        assert self.gateway.client_id == "5mkhqrqcm84nbmvt5srg6kgfsb"
+        assert self.gateway.client_secret == "1f240j4ildo1due9gt8o7ghlesovrltk573lbnktabtn3o58alu6"
         assert self.gateway.client == self.mock_cognito_client
 
     def test_get_secret_hash(self):
