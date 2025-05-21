@@ -128,9 +128,7 @@ jobs:
           if [ -f tech/k8s/configmap.yaml ]; then
             kubectl apply -f tech/k8s/configmap.yaml
           fi
-          
-          kubectl apply -f tech/k8s/secrets.yaml
-          
+                  
           if [ -f tech/k8s/PersistentVolumeClaim.yaml ]; then
             kubectl apply -f tech/k8s/PersistentVolumeClaim.yaml
           fi
