@@ -1,4 +1,4 @@
-<testsuite name="features.users.User Management" tests="7" errors="0" failures="0" skipped="0" time="0.333442" timestamp="2025-05-21T10:05:26.278181" hostname="MacBook-Air-de-Advolve.local"><testcase classname="features.users.User Management" name="Creating a new user successfully" status="passed" time="0.282692"><system-out>
+<testsuite name="users.User Management" tests="7" errors="0" failures="0" skipped="0" time="0.36458" timestamp="2025-05-21T14:47:47.515138" hostname="MacBook-Air-de-Advolve.local"><testcase classname="users.User Management" name="Creating a new user successfully" status="passed" time="0.294624"><system-out>
 <![CDATA[
 @scenario.begin
   Scenario: Creating a new user successfully
@@ -6,7 +6,7 @@
       | id | username | email             | cpf         |
       | 1  | user1    | user1@example.com | 12345678901 |
       | 2  | user2    | user2@example.com | 98765432101 |
-    When I create a user with the following information ... passed in 0.282s
+    When I create a user with the following information ... passed in 0.294s
       | username | email               | password   | cpf         |
       | newuser  | newuser@example.com | Password1! | 11122233344 |
     Then the user creation should be successful ... passed in 0.000s
@@ -16,7 +16,7 @@
 @scenario.end
 --------------------------------------------------------------------------------
 ]]>
-</system-out></testcase><testcase classname="features.users.User Management" name="Attempting to create a user with an existing CPF" status="passed" time="0.001566"><system-out>
+</system-out></testcase><testcase classname="users.User Management" name="Attempting to create a user with an existing CPF" status="passed" time="0.001822"><system-out>
 <![CDATA[
 @scenario.begin
   Scenario: Attempting to create a user with an existing CPF
@@ -24,7 +24,7 @@
       | id | username | email             | cpf         |
       | 1  | user1    | user1@example.com | 12345678901 |
       | 2  | user2    | user2@example.com | 98765432101 |
-    When I create a user with the following information ... passed in 0.001s
+    When I create a user with the following information ... passed in 0.002s
       | username | email            | password   | cpf         |
       | copycat  | copy@example.com | Password1! | 12345678901 |
     Then the user creation should fail ... passed in 0.000s
@@ -33,7 +33,7 @@
 @scenario.end
 --------------------------------------------------------------------------------
 ]]>
-</system-out></testcase><testcase classname="features.users.User Management" name="Retrieving a user by ID" status="passed" time="0.001138"><system-out>
+</system-out></testcase><testcase classname="users.User Management" name="Retrieving a user by ID" status="passed" time="0.00133"><system-out>
 <![CDATA[
 @scenario.begin
   Scenario: Retrieving a user by ID
@@ -48,7 +48,7 @@
 @scenario.end
 --------------------------------------------------------------------------------
 ]]>
-</system-out></testcase><testcase classname="features.users.User Management" name="Retrieving a user by CPF" status="passed" time="0.001141"><system-out>
+</system-out></testcase><testcase classname="users.User Management" name="Retrieving a user by CPF" status="passed" time="0.001239"><system-out>
 <![CDATA[
 @scenario.begin
   Scenario: Retrieving a user by CPF
@@ -63,7 +63,7 @@
 @scenario.end
 --------------------------------------------------------------------------------
 ]]>
-</system-out></testcase><testcase classname="features.users.User Management" name="Retrieving a non-existent user" status="passed" time="0.001047"><system-out>
+</system-out></testcase><testcase classname="users.User Management" name="Retrieving a non-existent user" status="passed" time="0.00136"><system-out>
 <![CDATA[
 @scenario.begin
   Scenario: Retrieving a non-existent user
@@ -78,7 +78,7 @@
 @scenario.end
 --------------------------------------------------------------------------------
 ]]>
-</system-out></testcase><testcase classname="features.users.User Management" name="Updating a user's information" status="passed" time="0.044433"><system-out>
+</system-out></testcase><testcase classname="users.User Management" name="Updating a user's information" status="passed" time="0.06267"><system-out>
 <![CDATA[
 @scenario.begin
   Scenario: Updating a user's information
@@ -86,7 +86,7 @@
       | id | username | email             | cpf         |
       | 1  | user1    | user1@example.com | 12345678901 |
       | 2  | user2    | user2@example.com | 98765432101 |
-    When I update user with ID 1 with the following information ... passed in 0.044s
+    When I update user with ID 1 with the following information ... passed in 0.062s
       | username | email                | password      | cpf         |
       | updated1 | updated1@example.com | NewPassword1! | 12345678901 |
     Then the user update should be successful ... passed in 0.000s
@@ -95,7 +95,7 @@
 @scenario.end
 --------------------------------------------------------------------------------
 ]]>
-</system-out></testcase><testcase classname="features.users.User Management" name="Deleting a user" status="passed" time="0.001426"><system-out>
+</system-out></testcase><testcase classname="users.User Management" name="Deleting a user" status="passed" time="0.001536"><system-out>
 <![CDATA[
 @scenario.begin
   Scenario: Deleting a user
