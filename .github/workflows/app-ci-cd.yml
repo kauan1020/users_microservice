@@ -137,11 +137,10 @@ jobs:
           kubectl apply -f tech/k8s/postgres-services.yaml
           
           if [ -f tech/k8s/job.yaml ]; then
+            kubectl delete job users-auth-migration -n users --ignore-not-found=true
             kubectl apply -f tech/k8s/job.yaml
           fi
           
-          # Corrigido para usar o nome correto do deployment: users-auth-service
           kubectl set image deployment/users-auth-service users-auth-service=131793876715.dkr.ecr.us-east-1.amazonaws.com/microservices/users:latest -n users || kubectl apply -f tech/k8s/deployment-users.yaml
           
           kubectl apply -f tech/k8s/service-users.yaml
-          
