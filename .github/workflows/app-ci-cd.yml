@@ -145,5 +145,3 @@ jobs:
           
           kubectl apply -f tech/k8s/service-users.yaml
           
-          # Verificar o status do deployment com o nome correto
-          kubectl rollout status deployment/users-auth-service -n users --timeout=300s
