@@ -1,9 +1,9 @@
-<testsuite name="features.auth.User Authentication" tests="3" errors="0" failures="0" skipped="0" time="0.111155" timestamp="2025-05-21T10:05:25.937465" hostname="MacBook-Air-de-Advolve.local"><testcase classname="features.auth.User Authentication" name="Successful login" status="passed" time="0.109426"><system-out>
+<testsuite name="auth.User Authentication" tests="3" errors="0" failures="0" skipped="0" time="0.097203" timestamp="2025-05-21T14:47:47.142600" hostname="MacBook-Air-de-Advolve.local"><testcase classname="auth.User Authentication" name="Successful login" status="passed" time="0.095676"><system-out>
 <![CDATA[
 @scenario.begin
   Scenario: Successful login
     Given the system has a registered user with CPF "12345678901" and password "valid_password" ... passed in 0.000s
-    When the user attempts to log in with CPF "12345678901" and password "valid_password" ... passed in 0.109s
+    When the user attempts to log in with CPF "12345678901" and password "valid_password" ... passed in 0.095s
     Then the login should be successful ... passed in 0.000s
     And the user should receive a valid token ... passed in 0.000s
     And the token should have an expiration time ... passed in 0.000s
@@ -11,7 +11,7 @@
 @scenario.end
 --------------------------------------------------------------------------------
 ]]>
-</system-out></testcase><testcase classname="features.auth.User Authentication" name="Failed login with incorrect password" status="passed" time="0.000841"><system-out>
+</system-out></testcase><testcase classname="auth.User Authentication" name="Failed login with incorrect password" status="passed" time="0.000745"><system-out>
 <![CDATA[
 @scenario.begin
   Scenario: Failed login with incorrect password
@@ -23,7 +23,7 @@
 @scenario.end
 --------------------------------------------------------------------------------
 ]]>
-</system-out></testcase><testcase classname="features.auth.User Authentication" name="Failed login with non-existent user" status="passed" time="0.000888"><system-out>
+</system-out></testcase><testcase classname="auth.User Authentication" name="Failed login with non-existent user" status="passed" time="0.000782"><system-out>
 <![CDATA[
 @scenario.begin
   Scenario: Failed login with non-existent user

@@ -1,138 +1,166 @@
-# Documentação do Projeto
+# Microsserviço de Usuários e Autenticação
 
-## Desenho da Arquitetura
+Este repositório contém o microsserviço responsável pelo gerenciamento de usuários e autenticação da plataforma, utilizando Amazon Cognito para segurança.
 
-Este sistema foi projetado para resolver os problemas enfrentados por um restaurante que está expandindo, mas sofre com dificuldades no gerenciamento de pedidos devido ao aumento na demanda. A solução é composta por uma aplicação de autoatendimento integrada a uma infraestrutura escalável, utilizando **FastAPI** como framework backend, **SQLAlchemy** e **Alembic** para manipulação de dados e migração de banco, e **Kubernetes** (via Minikube) para orquestração de contêineres.
+## Tecnologias
 
----
+- **Framework**: FastAPI
+- **Linguagem**: Python 3.10+
+- **Banco de Dados**: PostgreSQL
+- **Autenticação**: Amazon Cognito
+- **Documentação API**: Swagger/OpenAPI
+- **Testes**: Pytest + Behave
+- **Cobertura de Testes**: Coverage.py
+- **CI/CD**: GitHub Actions
 
-## 1. Requisitos do Negócio
+## Estrutura do Projeto
 
-### Melhoria na Experiência do Cliente:
-- Totens de autoatendimento para permitir que os clientes façam seus pedidos sem intervenção de atendentes.
-- Apresentação de produtos (lanche, bebida, acompanhamento, sobremesa) com preço e descrição.
-- Sistema de pagamento integrado via QR Code (Mercado Pago).
-- Rastreamento do status do pedido pelo cliente em tempo real: **Recebido → Em preparação → Pronto → Finalizado**.
-- Notificação do cliente quando o pedido estiver pronto para retirada.
+```
+tech/
+├── api/
+│   ├── auth_router.py
+│   └── users_router.py
+├── domain/
+│   └── entities/
+│       └── user.py
+├── infra/
+│   ├── databases/
+│   │   └── database.py
+│   └── gateways/
+│       └── cognito_gateway.py
+├── interfaces/
+│   ├── controllers/
+│   │   ├── auth_controller.py
+│   │   └── user_controller.py
+│   ├── gateways/
+│   │   ├── user_gateway.py
+│   │   └── cognito_gateway.py
+│   └── schemas/
+│       ├── auth_schema.py
+│       └── user_schema.py
+└── use_cases/
+    ├── authenticate/
+    │   └── authenticate_user_use_case.py
+    └── users/
+        ├── create_user_use_case.py
+        ├── delete_user_use_case.py
+        ├── get_user_by_cpf_use_case.py
+        ├── get_user_use_case.py
+        ├── list_users_use_case.py
+        └── update_user_use_case.py
+```
 
-### Gestão para a Cozinha e Administração:
-- Garantir que os pedidos pagos sejam enviados automaticamente para a cozinha, com visibilidade em painéis administrativos.
-- Sistema administrativo para gerenciar produtos, clientes e promoções.
+## Configuração do Ambiente
 
-### Problema Atual de Performance:
-- **Totem de autoatendimento enfrenta lentidão em horários de pico.**
-- **Solução proposta**: Implementação de um sistema escalável, que usa Kubernetes e Horizontal Pod Autoscaler (HPA), garantindo maior disponibilidade e desempenho durante picos de uso.
+### Requisitos
 
----
+- Python 3.10+
+- PostgreSQL 13+
+- Conta na AWS para Amazon Cognito
 
-## 2. Requisitos de Infraestrutura
 
-### 2.1 Cluster Kubernetes
-- **Orquestrador**: Minikube (ambiente local para desenvolvimento).
-- **Recursos Kubernetes**:
-  - **Deployments**: Cada serviço possui réplicas gerenciadas para disponibilidade.
-  - **Horizontal Pod Autoscaler (HPA)**: Escala os pods de acordo com a carga da aplicação (CPU/memória).
-  - **Secrets**: Para armazenar dados sensíveis, como credenciais do banco de dados e chave da API do Mercado Pago.
-  - **ConfigMaps**: Para armazenar configurações não sensíveis, como categorias fixas (lanche, bebida, etc.).
-  - **Persistent Volume (PV)** e **Persistent Volume Claim (PVC)**: Para garantir persistência de dados do PostgreSQL.
+## Banco de Dados
 
-### 2.2 Serviços da Aplicação
-O sistema é dividido em **quatro serviços principais**:
+### Modelo de Dados
 
-#### **2.2.1 Serviço de Pedidos**
-- **API**: `/orders`
-- **Funcionalidade**:
-  - Realiza o checkout do pedido.
-  - Retorna o status do pedido.
-  - Atualiza o status do pedido conforme ele avança no fluxo.
-  - Exclui pedidos.
-- **Banco de Dados**:
-  - Relaciona os pedidos aos produtos (muitos-para-muitos).
-  - Salva histórico de status.
-- **Exemplo**:
-  - **POST** `/orders/checkout`: Cria um pedido.
-  - **GET** `/orders`: Lista pedidos com prioridade (**Pronto > Em preparação > Recebido**).
+```sql
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    cpf VARCHAR(11) UNIQUE NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    phone VARCHAR(20),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+```
 
-#### **2.2.2 Serviço de Pagamento**
-- **API**: `/payments`
-- **Funcionalidade**:
-  - Integração com Mercado Pago para gerar QR Code.
-  - Gerencia o status do pagamento.
-  - Recebe atualizações via Webhook.
-- **Banco de Dados**:
-  - Armazena transações e status (**Aprovado/Rejeitado**).
-- **Exemplo**:
-  - **POST** `/payments`: Gera QR Code.
-  - **POST** `/payments/webhook`: Atualiza status do pagamento.
+## Endpoints da API
 
-#### **2.2.3 Serviço de Produtos**
-- **API**: `/products`
-- **Funcionalidade**:
-  - Gerencia produtos disponíveis no sistema (CRUD completo).
-  - Filtra produtos por categoria.
-- **Banco de Dados**:
-  - Armazena categorias, descrições, preços e imagens.
-- **Exemplo**:
-  - **POST** `/products`: Cria novo produto.
-  - **GET** `/products/{categoria}`: Lista produtos por categoria.
+### Endpoints de Autenticação
 
-#### **2.2.4 Serviço de Usuários**
-- **API**: `/users`
-- **Funcionalidade**:
-  - Gerencia o cadastro e dados de clientes.
-  - Recupera informações por CPF.
-- **Banco de Dados**:
-  - Relaciona clientes aos pedidos realizados.
-- **Exemplo**:
-  - **POST** `/users`: Cadastra cliente.
-  - **GET** `/users/cpf/{cpf}`: Busca cliente pelo CPF.
+- `POST /api/auth/login` - Autentica um usuário e retorna um token
 
-### 2.3 Banco de Dados
-- **PostgreSQL**:
-  - Gerenciado dentro do cluster Kubernetes, com armazenamento persistente configurado via PV/PVC.
-  - Esquema relacional projetado para suportar consultas rápidas e integridade de dados.
-  - **Migrações de Esquema**: Feitas utilizando **Alembic**, garantindo versionamento do banco.
+### Endpoints de Usuários
 
----
+- `GET /api/users/` - Lista todos os usuários
+- `GET /api/users/{user_id}` - Obtém um usuário pelo ID
+- `GET /api/users/cpf/{cpf}` - Obtém um usuário pelo CPF
+- `POST /api/users/` - Cria um novo usuário
+- `PUT /api/users/{user_id}` - Atualiza um usuário existente
+- `DELETE /api/users/{user_id}` - Remove um usuário
 
-## 3. Diagrama de Arquitetura
+## Fluxo de Autenticação
 
-## 4. Configurações Detalhadas
+1. O cliente envia as credenciais (CPF e senha) para o endpoint `/api/auth/login`
+2. O microsserviço valida as credenciais com o Amazon Cognito
+3. Se as credenciais forem válidas, um token JWT é retornado
+4. O cliente utiliza este token para acessar endpoints protegidos de outros microsserviços
 
-### **ConfigMap**
-- Contém informações não sensíveis:
-  - URLs da API do Mercado Pago.
-  - Categorias de produtos.
+## Integração com Outros Serviços
 
-### **Secrets**
-- Armazena credenciais e chaves sensíveis:
-  - Credenciais do PostgreSQL.
-  - Chave da API Mercado Pago.
+- **Microsserviço de Pedidos**: Fornece informações do usuário para a criação de pedidos
+- **Microsserviço de Pagamentos**: Verifica a identidade do usuário para processar pagamentos
+- **API Gateway**: Para controle de acesso centralizado
 
-### **Horizontal Pod Autoscaler (HPA)**
-- Configurado para escalar dinamicamente:
-  - **Pedidos API**: De 2 a 5 réplicas com base em 50% de uso da CPU.
-  - **Pagamento API**: De 1 a 5 réplicas com base em 70% de uso da CPU.
+## Testes
 
-### **Persistent Volume (PV)**
-- Garante persistência dos dados do banco, mesmo em caso de reinicialização:
-  - 10 GB de armazenamento local configurado no Minikube.
+### Executando Testes Unitários
 
----
+```bash
+# Execute todos os testes
+cd tech
 
-## 5. Solução para Problema de Performance
+pytest
 
-- **Problema**: Totem de autoatendimento sofre com lentidão durante picos de tráfego.
-- **Solução**:
-  - Implementação de **HPA** para escalar automaticamente o backend.
-  - Configuração de **Ingress Controller** para balancear o tráfego entre os pods.
-  - Banco de dados com armazenamento persistente para maior confiabilidade.
+# Execute testes com cobertura
+pytest --cov=tech tests/
 
----
+# Gere relatório HTML de cobertura
+pytest --cov=tech --cov-report=html tests/
+```
 
-## 6. Tecnologias Utilizadas
+### Executando Testes BDD
 
-- **Backend**: FastAPI, SQLAlchemy, Alembic.
-- **Banco de Dados**: PostgreSQL.
-- **Orquestração**: Kubernetes (via Minikube).
-- **Integração de Pagamento**: Mercado Pago.
+```bash
+
+cd tech
+
+
+# Execute todos os testes BDD
+behave tests/tech/bdd/features/
+
+# Execute um cenário específico
+behave tests/tech/bdd/features/users.feature
+
+# Execute testes com tags específicas
+behave tests/tech/bdd/features/ --tags=authentication
+```
+
+#### Exemplo de Cenário BDD
+
+```gherkin
+Feature: Autenticação de usuários
+  Como um usuário
+  Eu quero me autenticar na plataforma
+  Para acessar funcionalidades protegidas
+
+  Scenario: Login com credenciais válidas
+    Given que existe um usuário com CPF "12345678901" e senha "Senha@123"
+    When eu tento fazer login com CPF "12345678901" e senha "Senha@123"
+    Then o login deve ser bem-sucedido
+    And um token JWT válido deve ser retornado
+```
+
+### Cobertura de Testes
+
+
+![cov.png](cov.png)
+
+![bdd.png](bdd.png)
+
+![sonar.png](sonar.png)
+
+
+> **Nota**: A imagem acima mostra a estrutura de diretórios dos testes, incluindo a organização dos testes BDD.
