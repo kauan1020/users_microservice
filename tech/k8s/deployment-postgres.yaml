@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: users-postgres
-  namespace: user-auth
+  namespace: users
 spec:
   replicas: 1
   selector:
@@ -15,38 +15,41 @@ spec:
     spec:
       containers:
       - name: postgres
-        # Specify platform to ensure architecture compatibility
-        image: postgres:15-alpine
-        # Alternative approaches:
-        # 1. Use a specific architecture tag: postgres:latest@sha256:... (with correct SHA for your architecture)
-        # 2. Use multi-arch image: postgres:15
+        image: postgres:13
         ports:
         - containerPort: 5432
         env:
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
-              name: users-auth-secret
+              name: users-secret
               key: postgres-user
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: users-auth-secret
+              name: users-secret
               key: postgres-password
         - name: POSTGRES_DB
           valueFrom:
             secretKeyRef:
-              name: users-auth-secret
+              name: users-secret
               key: postgres-db
-        # Add this to prevent exec format error with entrypoint
-        # Only needed if you continue having architecture issues
-        command: ["/bin/sh"]
-        args: ["-c", "docker-entrypoint.sh postgres"]
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
         volumeMounts:
         - name: postgres-data
           mountPath: /var/lib/postgresql/data
-          # Add subPath to prevent permission issues
-          subPath: postgres
+          subPath: pgdata
+        - name: init-script
+          mountPath: /docker-entrypoint-initdb.d
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - pg_isready -U postgres
+          initialDelaySeconds: 15
+          periodSeconds: 10
         resources:
           requests:
             memory: "256Mi"
@@ -56,8 +59,9 @@ spec:
             cpu: "500m"
       volumes:
       - name: postgres-data
-        persistentVolumeClaim:
-          claimName: users-postgres-pvc
+        hostPath:
+          path: /mnt/data/postgres
+          type: DirectoryOrCreate
       - name: init-script
         configMap:
           name: users-db-init

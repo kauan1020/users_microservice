@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: users-auth-service
-  namespace: user-auth
+  namespace: users
 spec:
   replicas: 1
   selector:

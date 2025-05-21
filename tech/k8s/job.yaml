@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: users-auth-migration
-  namespace: user-auth
+  namespace: users
 spec:
   template:
     spec:
