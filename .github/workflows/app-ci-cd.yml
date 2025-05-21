@@ -5,10 +5,13 @@ on:
     branches: [ main, master, develop ]
   pull_request:
     branches: [ main, master ]
+  repository_dispatch:
+    types: [trigger-deployment]
 
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+    if: github.event_name != 'repository_dispatch'
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -98,9 +101,9 @@ jobs:
             POETRY_VERSION=1.5.1
 
   deploy:
-    needs: test-and-build
+    needs: ${{ github.event_name != 'repository_dispatch' && 'test-and-build' || '' }}
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'repository_dispatch'
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -144,3 +147,24 @@ jobs:
           kubectl set image deployment/users-auth-service users-auth-service=131793876715.dkr.ecr.us-east-1.amazonaws.com/microservices/users:latest -n users || kubectl apply -f tech/k8s/deployment-users.yaml
           
           kubectl apply -f tech/k8s/service-users.yaml
+
+      - name: Trigger other microservices
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${{ secrets.GH_PAT }}" \
+            https://api.github.com/repos/kauan1020/orders_microservice/dispatches \
+            -d '{"event_type":"trigger-deployment","client_payload":{"repository":"users_microservice"}}'
+            
+          curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${{ secrets.GH_PAT }}" \
+            https://api.github.com/repos/kauan1020/payments_microservice/dispatches \
+            -d '{"event_type":"trigger-deployment","client_payload":{"repository":"users_microservice"}}'
+            
+          curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${{ secrets.GH_PAT }}" \
+            https://api.github.com/repos/kauan1020/product_microservice/dispatches \
+            -d '{"event_type":"trigger-deployment","client_payload":{"repository":"users_microservice"}}'
